@@ -3,6 +3,8 @@
 Guess the hidden five-letter word in six tries. A fast, accessible word game
 that runs in any modern browser, installs like an app, and works offline.
 
+**Play it at [saiprasaad.github.io/Wordle-Clone-Web](https://saiprasaad.github.io/Wordle-Clone-Web/)**
+
 ![Gameplay in light mode, the result card in dark mode, and high contrast mode](docs/screenshot.png)
 
 ## Features
@@ -55,9 +57,14 @@ GitHub Actions runs both suites on every push and pull request.
 
 ## Deploy
 
-The site is static, and every path is relative, so it runs from a domain root or a subfolder.
-For GitHub Pages, open **Settings → Pages** and choose **Deploy from a branch**, then `main` and
-`/ (root)`. It will then be available at `https://<user>.github.io/Wordle-Clone-Web/`.
+The site is static and every path is relative, so any static host works, from a domain root or a
+subfolder. Every merge to `main` goes live automatically on:
+
+- **GitHub Pages**, at [saiprasaad.github.io/Wordle-Clone-Web](https://saiprasaad.github.io/Wordle-Clone-Web/).
+  It is served from the root of `main` (**Settings → Pages → Deploy from a branch**).
+- **Netlify**, configured by [`netlify.toml`](netlify.toml): no build step, and security headers
+  that GitHub Pages can't set. To connect it, choose **Add new site → Import an existing project**
+  in Netlify and pick this repository. The settings are read from the file.
 
 ## Project layout
 

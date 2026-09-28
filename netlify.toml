@@ -1,0 +1,16 @@
+# Netlify settings. The game is a static site, so there is nothing to build:
+# Netlify serves the repository root as is.
+
+[build]
+  publish = "."
+
+[build.environment]
+  # Skips installing devDependencies (Playwright, only needed for tests).
+  NODE_ENV = "production"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
