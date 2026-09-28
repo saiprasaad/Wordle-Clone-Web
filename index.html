@@ -1,59 +1,207 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.dictionaryapi.dev; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'"
+    />
+    <title>Wordle Clone · Guess the word in six tries</title>
+    <meta
+      name="description"
+      content="Guess the hidden five-letter word in six tries. A new daily puzzle, unlimited practice, hard mode, statistics and dark mode. Works offline."
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Wordle" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Wordle Clone" />
+    <meta
+      property="og:description"
+      content="Guess the hidden five-letter word in six tries. Daily puzzle and unlimited play."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="js/theme.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <link rel="modulepreload" href="js/app.js" />
+    <link rel="modulepreload" href="js/words.js" />
+    <link rel="modulepreload" href="js/game.js" />
+    <link rel="modulepreload" href="js/puzzle.js" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="header-group">
+          <button type="button" class="icon-button" id="help-button" aria-label="How to play" aria-haspopup="dialog" title="How to play">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M9.2 9.3a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.6-2.8 4" /><path d="M12 17.6v.1" /></svg>
+          </button>
+        </div>
+        <h1 class="title">Wordle</h1>
+        <div class="header-group header-group-end">
+          <button type="button" class="icon-button" id="stats-button" aria-label="Statistics" aria-haspopup="dialog" title="Statistics">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V13M10 20V5M16 20v-9M22 20H2" /></svg>
+          </button>
+          <button type="button" class="icon-button" id="settings-button" aria-label="Settings" aria-haspopup="dialog" title="Settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.27 4.5L10.58 1.9L13.42 1.9L13.73 4.5A7.7 7.7 0 0 1 16.08 5.47L18.14 3.85L20.15 5.86L18.53 7.92A7.7 7.7 0 0 1 19.5 10.27L22.1 10.58L22.1 13.42L19.5 13.73A7.7 7.7 0 0 1 18.53 16.08L20.15 18.14L18.14 20.15L16.08 18.53A7.7 7.7 0 0 1 13.73 19.5L13.42 22.1L10.58 22.1L10.27 19.5A7.7 7.7 0 0 1 7.92 18.53L5.86 20.15L3.85 18.14L5.47 16.08A7.7 7.7 0 0 1 4.5 13.73L1.9 13.42L1.9 10.58L4.5 10.27A7.7 7.7 0 0 1 5.47 7.92L3.85 5.86L5.86 3.85L7.92 5.47A7.7 7.7 0 0 1 10.27 4.5Z" /><circle cx="12" cy="12" r="3.2" /></svg>
+          </button>
+        </div>
+      </div>
+    </header>
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+    <main class="game">
+      <div class="mode-bar">
+        <fieldset class="mode-switch" id="mode-switch">
+          <legend class="visually-hidden">Game mode</legend>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="daily" checked />
+            <span>Daily <span class="puzzle-number" id="puzzle-number"></span></span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="unlimited" />
+            <span>Unlimited</span>
+          </label>
+        </fieldset>
+        <button type="button" class="icon-button new-word-button" id="new-word-button" aria-label="New word" title="New word" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" /><path d="M20 3.5V8h-4.5" /></svg>
+        </button>
+      </div>
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+      <div class="board-area">
+        <div class="board" id="board" role="group" aria-label="Game board"></div>
+      </div>
 
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="/">
+      <div class="keyboard" id="keyboard" role="group" aria-label="Keyboard"></div>
+    </main>
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+    <div class="toaster" id="toaster" popover="manual"></div>
+    <div class="visually-hidden" data-announcer aria-live="polite" aria-atomic="true"></div>
 
-  <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="wordle_clone">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <dialog class="dialog" id="help-dialog" aria-labelledby="help-title">
+      <div class="dialog-body">
+        <button type="button" class="icon-button dialog-close" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+        <h2 class="dialog-title" id="help-title" tabindex="-1" autofocus>How to play</h2>
+        <p class="help-lead">Guess the hidden word in 6 tries.</p>
+        <ul class="help-list">
+          <li>Each guess must be a valid 5-letter word.</li>
+          <li>The color of the tiles will change to show how close your guess was to the word.</li>
+        </ul>
+        <h3 class="help-subtitle">Examples</h3>
+        <div class="example">
+          <div class="example-row" aria-hidden="true">
+            <span class="tile" data-state="correct">C</span><span class="tile" data-state="tbd">R</span><span class="tile" data-state="tbd">A</span><span class="tile" data-state="tbd">F</span><span class="tile" data-state="tbd">T</span>
+          </div>
+          <p><strong>C</strong> is in the word and in the correct spot.</p>
+        </div>
+        <div class="example">
+          <div class="example-row" aria-hidden="true">
+            <span class="tile" data-state="tbd">P</span><span class="tile" data-state="tbd">I</span><span class="tile" data-state="present">L</span><span class="tile" data-state="tbd">O</span><span class="tile" data-state="tbd">T</span>
+          </div>
+          <p><strong>L</strong> is in the word but in the wrong spot.</p>
+        </div>
+        <div class="example">
+          <div class="example-row" aria-hidden="true">
+            <span class="tile" data-state="tbd">M</span><span class="tile" data-state="tbd">O</span><span class="tile" data-state="tbd">U</span><span class="tile" data-state="absent">S</span><span class="tile" data-state="tbd">E</span>
+          </div>
+          <p><strong>S</strong> is not in the word in any spot.</p>
+        </div>
+        <h3 class="help-subtitle">Two ways to play</h3>
+        <ul class="help-list">
+          <li><strong>Daily</strong> gives everyone the same word. A new puzzle arrives at midnight.</li>
+          <li><strong>Unlimited</strong> serves a fresh random word whenever you like.</li>
+        </ul>
+        <p class="help-note">Type on your keyboard or tap the keys. For an extra challenge, turn on Hard Mode in Settings.</p>
+        <div class="visually-hidden" data-announcer aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </dialog>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+    <dialog class="dialog" id="stats-dialog" aria-labelledby="stats-title">
+      <div class="dialog-body">
+        <button type="button" class="icon-button dialog-close" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+        <section class="result" id="result" aria-labelledby="result-title" hidden>
+          <h2 class="result-title" id="result-title" tabindex="-1" autofocus></h2>
+          <p class="visually-hidden" id="result-answer-label"></p>
+          <div class="answer-tiles" id="answer-tiles" aria-hidden="true"></div>
+          <div class="definition" id="definition"></div>
+        </section>
+        <h2 class="dialog-title" id="stats-title" tabindex="-1" autofocus>Statistics <span class="stats-mode"><span aria-hidden="true">· </span><span id="stats-mode"></span></span></h2>
+        <dl class="stats-grid">
+          <div><dt>Played</dt><dd id="stat-played">0</dd></div>
+          <div><dt>Win %</dt><dd id="stat-win">0</dd></div>
+          <div><dt>Current Streak</dt><dd id="stat-streak">0</dd></div>
+          <div><dt>Max Streak</dt><dd id="stat-max">0</dd></div>
+        </dl>
+        <h3 class="stats-subtitle" id="distribution-title">Guess distribution</h3>
+        <ol class="distribution" id="distribution" aria-labelledby="distribution-title"></ol>
+        <p class="distribution-empty" id="distribution-empty" hidden>No wins yet. Your guess counts will show up here.</p>
+        <div class="stats-footer">
+          <p class="countdown" id="countdown">
+            <span class="countdown-label">Next puzzle</span>
+            <span class="countdown-time" id="countdown-time" role="timer" aria-live="off"></span>
+          </p>
+          <div class="stats-buttons">
+            <button type="button" class="button button-primary" id="share-button">
+              Share
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5 12 3l4.5 4.5M5 12v7.5a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5V12" /></svg>
+            </button>
+            <button type="button" class="button button-secondary" id="play-button"></button>
+          </div>
+        </div>
+        <div class="visually-hidden" data-announcer aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </dialog>
 
-  <title>wordle_clone</title>
-  <link rel="manifest" href="manifest.json">
+    <dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title">
+      <div class="dialog-body">
+        <button type="button" class="icon-button dialog-close" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+        <h2 class="dialog-title" id="settings-title" tabindex="-1" autofocus>Settings</h2>
+        <div class="settings-list">
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name" id="hard-mode-name">Hard Mode</span>
+              <span class="setting-hint" id="hard-mode-hint">Any revealed hints must be used in subsequent guesses</span>
+            </span>
+            <input type="checkbox" class="switch-input" id="hard-mode" role="switch" aria-labelledby="hard-mode-name" aria-describedby="hard-mode-hint" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name" id="dark-theme-name">Dark Theme</span>
+              <span class="setting-hint" id="dark-theme-hint">Follows your device until you change it</span>
+            </span>
+            <input type="checkbox" class="switch-input" id="dark-theme" role="switch" aria-labelledby="dark-theme-name" aria-describedby="dark-theme-hint" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <label class="setting">
+            <span class="setting-text">
+              <span class="setting-name" id="high-contrast-name">High Contrast Mode</span>
+              <span class="setting-hint" id="high-contrast-hint">Orange and blue tiles for better color vision</span>
+            </span>
+            <input type="checkbox" class="switch-input" id="high-contrast" role="switch" aria-labelledby="high-contrast-name" aria-describedby="high-contrast-hint" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
+        <p class="settings-footer">
+          <a href="https://github.com/saiprasaad/Wordle-Clone-Web" target="_blank" rel="noopener noreferrer">Source code</a>
+          <span aria-hidden="true">·</span>
+          <span>Version 2.0</span>
+        </p>
+        <div class="visually-hidden" data-announcer aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </dialog>
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "914492860";
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
-</head>
-<body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
-</body>
+    <noscript><p class="noscript">This game needs JavaScript to run.</p></noscript>
+  </body>
 </html>
