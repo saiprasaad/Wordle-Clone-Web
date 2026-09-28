@@ -700,6 +700,7 @@ function disarmDelete() {
 
 const splash = $('splash');
 const splashActions = { primary: playDaily, secondary: null };
+let splashTimer = null;
 
 /** Tailors the welcome screen to today's puzzle and the player's account. */
 function renderSplash() {
@@ -744,19 +745,37 @@ function renderSplash() {
   }
   secondary.hidden = !splashActions.secondary;
 
+  $('splash-number').textContent = `Daily puzzle #${game.puzzle.toLocaleString()}`;
   // The puzzle's own date, which is yesterday's while an unfinished game
   // carries on past midnight.
   const date = new Date();
   date.setDate(date.getDate() - (puzzleNumber() - game.puzzle));
   $('splash-date').textContent = new Intl.DateTimeFormat(undefined, {
+    weekday: 'long',
     month: 'long',
     day: 'numeric',
-    year: 'numeric',
   }).format(date);
-  $('splash-number').textContent = `No. ${game.puzzle.toLocaleString()}`;
+
+  // Once today's puzzle is done, say when the next one arrives.
+  const next = $('splash-next');
+  next.hidden = status === 'playing';
+  clearTimeout(splashTimer);
+  if (!next.hidden) {
+    next.textContent = `Next puzzle in ${formatWait(msUntilNextPuzzle())}`;
+    splashTimer = setTimeout(renderSplash, 30_000);
+  }
+}
+
+/** Time left, rounded up to the minute: "7h 12m", "12h" or "42m". */
+function formatWait(ms) {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
+  const hours = Math.floor(minutes / 60);
+  if (!hours) return `${minutes}m`;
+  return minutes % 60 ? `${hours}h ${minutes % 60}m` : `${hours}h`;
 }
 
 function dismissSplash() {
+  clearTimeout(splashTimer);
   splash.inert = true; // Ignore further taps while it fades out.
   for (const element of document.querySelectorAll('.app-header, .game')) element.inert = false;
   const hide = () => {

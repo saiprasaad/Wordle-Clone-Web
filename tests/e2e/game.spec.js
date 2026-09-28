@@ -308,10 +308,10 @@ test('other open tabs stay in sync', async ({ page, context }) => {
 test('moves on to the next puzzle at midnight', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-05T23:59:30-04:00') });
   await openGame(page, { time: null, play: false });
-  await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE}`);
+  await expect(page.locator('#splash-number')).toHaveText(`Daily puzzle #${TODAY_PUZZLE}`);
   await page.clock.fastForward('01:00');
-  await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE + 1}`);
-  await expect(page.locator('#splash-date')).toHaveText('October 6, 2026');
+  await expect(page.locator('#splash-number')).toHaveText(`Daily puzzle #${TODAY_PUZZLE + 1}`);
+  await expect(page.locator('#splash-date')).toHaveText('Tuesday, October 6');
   await startPlaying(page);
   await expect(page.locator('#puzzle-number')).toHaveText(`#${TODAY_PUZZLE + 1}`);
 });
@@ -333,8 +333,9 @@ test.describe('welcome screen', () => {
   test("introduces today's puzzle and holds the game until Play", async ({ page }) => {
     await openGame(page, { play: false });
     await expect(page.locator('#splash-message')).toHaveText(/^Find the hidden five-/);
-    await expect(page.locator('#splash-date')).toHaveText('October 5, 2026');
-    await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE}`);
+    await expect(page.locator('#splash-number')).toHaveText(`Daily puzzle #${TODAY_PUZZLE}`);
+    await expect(page.locator('#splash-date')).toHaveText('Monday, October 5');
+    await expect(page.locator('#splash-next')).toBeHidden();
     // No sign-in in local copies without the emulators, and nothing else to offer yet.
     await expect(page.locator('#splash-secondary')).toBeHidden();
 
@@ -363,6 +364,8 @@ test.describe('welcome screen', () => {
     await page.reload();
     await expect(page.locator('#splash-message')).toHaveText('Not this time. A new word arrives at midnight.');
     await expect(page.locator('#splash-primary')).toHaveText('See stats');
+    // Noon in the test time zone: twelve hours until the next puzzle.
+    await expect(page.locator('#splash-next')).toHaveText('Next puzzle in 12h');
 
     await page.locator('#splash-secondary', { hasText: 'Play Unlimited' }).click();
     await expect(page.locator('#splash')).toBeHidden();
