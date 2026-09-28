@@ -78,7 +78,7 @@ test('progress and stats follow the player to another device', async ({ browser 
     await expect(phone.page.locator('#splash-primary')).toHaveText('See stats', { timeout: 2000 });
   }).toPass();
   await startPlaying(phone.page);
-  await expect(phone.page.locator('#result-title')).toHaveText('Impressive!');
+  await expect(phone.page.locator('#result-title')).toHaveText('Excellent!');
   await expect(phone.page.locator('#stat-played')).toHaveText('1');
   await expect(phone.page.locator('#stat-streak')).toHaveText('1');
 

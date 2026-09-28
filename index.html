@@ -7,21 +7,21 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.dictionaryapi.dev https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; frame-src https://*.firebaseapp.com; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'"
     />
-    <title>Wordle Clone · Guess the word in six tries</title>
+    <title>Voila · Guess the word in six tries</title>
     <meta
       name="description"
-      content="Guess the hidden five-letter word in six tries. A new daily puzzle, unlimited practice, hard mode, statistics and dark mode. Works offline."
+      content="Find the hidden five-letter word in six guesses. A new daily puzzle, unlimited practice, hard mode, statistics and dark mode. Works offline."
     />
     <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light dark" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Wordle" />
+    <meta name="apple-mobile-web-app-title" content="Voila" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Wordle Clone" />
+    <meta property="og:title" content="Voila" />
     <meta
       property="og:description"
-      content="Guess the hidden five-letter word in six tries. Daily puzzle and unlimited play."
+      content="Find the hidden five-letter word in six guesses. Daily puzzle and unlimited play."
     />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
@@ -40,10 +40,12 @@
   <body>
     <section class="splash" id="splash" aria-labelledby="splash-title">
       <div class="splash-content">
-        <svg class="splash-logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" /><path d="M15 21l8.5 24L32 26.5 40.5 45 49 21" /></svg>
-        <h1 class="splash-title" id="splash-title">Wordle</h1>
+        <h1 class="splash-title" id="splash-title">
+          <span class="visually-hidden">Voila</span>
+          <span class="splash-tiles" aria-hidden="true"><span class="tile">V</span><span class="tile">O</span><span class="tile">I</span><span class="tile">L</span><span class="tile">A</span></span>
+        </h1>
         <p class="splash-greeting" id="splash-greeting" hidden></p>
-        <p class="splash-message" id="splash-message">Get 6 chances to guess a 5-&#8288;letter word.</p>
+        <p class="splash-message" id="splash-message">Find the hidden five-&#8288;letter word in six guesses.</p>
         <div class="splash-buttons">
           <button type="button" class="pill-button pill-button-outline" id="splash-secondary" hidden></button>
           <button type="button" class="pill-button" id="splash-primary">Play</button>
@@ -63,7 +65,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M9.2 9.3a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.6-2.8 4" /><path d="M12 17.6v.1" /></svg>
           </button>
         </div>
-        <h1 class="title">Wordle</h1>
+        <h1 class="title">Voila</h1>
         <div class="header-group header-group-end">
           <button type="button" class="icon-button" id="stats-button" aria-label="Statistics" aria-haspopup="dialog" title="Statistics">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V13M10 20V5M16 20v-9M22 20H2" /></svg>
@@ -108,30 +110,30 @@
         <button type="button" class="icon-button dialog-close" data-close aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
-        <h2 class="dialog-title dialog-title-display" id="help-title" tabindex="-1" autofocus>How To Play</h2>
-        <p class="help-lead">Guess the hidden word in 6 tries.</p>
+        <h2 class="dialog-title dialog-title-display" id="help-title" tabindex="-1" autofocus>How to play</h2>
+        <p class="help-lead">Find the hidden five-letter word in six guesses.</p>
         <ul class="help-list">
-          <li>Each guess must be a valid 5-letter word.</li>
-          <li>The color of the tiles will change to show how close your guess was to the word.</li>
+          <li>Every guess has to be a real five-letter word.</li>
+          <li>After each guess, the tiles change color to show how close you are.</li>
         </ul>
-        <h3 class="help-subtitle">Examples</h3>
+        <h3 class="help-subtitle">Reading the tiles</h3>
         <div class="example">
           <div class="example-row" aria-hidden="true">
             <span class="tile" data-state="correct">C</span><span class="tile" data-state="tbd">R</span><span class="tile" data-state="tbd">A</span><span class="tile" data-state="tbd">F</span><span class="tile" data-state="tbd">T</span>
           </div>
-          <p><strong>C</strong> is in the word and in the correct spot.</p>
+          <p><strong>C</strong> is in the word, in this exact spot.</p>
         </div>
         <div class="example">
           <div class="example-row" aria-hidden="true">
             <span class="tile" data-state="tbd">P</span><span class="tile" data-state="tbd">I</span><span class="tile" data-state="present">L</span><span class="tile" data-state="tbd">O</span><span class="tile" data-state="tbd">T</span>
           </div>
-          <p><strong>L</strong> is in the word but in the wrong spot.</p>
+          <p><strong>L</strong> is in the word, but in a different spot.</p>
         </div>
         <div class="example">
           <div class="example-row" aria-hidden="true">
             <span class="tile" data-state="tbd">M</span><span class="tile" data-state="tbd">O</span><span class="tile" data-state="tbd">U</span><span class="tile" data-state="absent">S</span><span class="tile" data-state="tbd">E</span>
           </div>
-          <p><strong>S</strong> is not in the word in any spot.</p>
+          <p><strong>S</strong> isn't in the word at all.</p>
         </div>
         <h3 class="help-subtitle">Two ways to play</h3>
         <ul class="help-list">
@@ -217,7 +219,7 @@
           <label class="setting">
             <span class="setting-text">
               <span class="setting-name" id="hard-mode-name">Hard Mode</span>
-              <span class="setting-hint" id="hard-mode-hint">Any revealed hints must be used in subsequent guesses</span>
+              <span class="setting-hint" id="hard-mode-hint">Letters you've uncovered must be used in later guesses</span>
             </span>
             <input type="checkbox" class="switch-input" id="hard-mode" role="switch" aria-labelledby="hard-mode-name" aria-describedby="hard-mode-hint" />
             <span class="switch" aria-hidden="true"></span>

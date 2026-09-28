@@ -35,11 +35,11 @@ test('wins the daily puzzle with the physical keyboard', async ({ page }) => {
 
   await guess(page, TODAY_ANSWER);
   await expectScoredRow(page, 1, TODAY_ANSWER, TODAY_ANSWER);
-  await expect(toast(page, 'Magnificent')).toBeVisible();
+  await expect(toast(page, 'Brilliant')).toBeVisible();
 
   const stats = page.locator('#stats-dialog');
   await expect(stats).toBeVisible();
-  await expect(stats.locator('#result-title')).toHaveText('Magnificent!');
+  await expect(stats.locator('#result-title')).toHaveText('Brilliant!');
   await expect(stats.locator('#answer-tiles')).toHaveText(TODAY_ANSWER.toUpperCase());
   await expect(stats.locator('#stat-played')).toHaveText('1');
   await expect(stats.locator('#stat-win')).toHaveText('100');
@@ -59,7 +59,7 @@ test('shares a spoiler-free grid to the clipboard', async ({ page, context }) =>
 
   const text = await page.evaluate(() => navigator.clipboard.readText());
   const lines = text.split('\n');
-  expect(lines[0]).toBe(`Wordle Clone #${TODAY_PUZZLE} 2/6`);
+  expect(lines[0]).toBe(`Voila #${TODAY_PUZZLE} 2/6`);
   expect(lines[3]).toBe('🟩🟩🟩🟩🟩');
   expect(text).not.toContain(TODAY_ANSWER);
   expect(lines.at(-1)).toBe('http://localhost:4173/');
@@ -68,10 +68,10 @@ test('shares a spoiler-free grid to the clipboard', async ({ page, context }) =>
 test('rejects short and unknown words', async ({ page }) => {
   await openGame(page);
   await guess(page, 'cra');
-  await expect(toast(page, 'Not enough letters')).toBeVisible();
+  await expect(toast(page, 'Needs five letters')).toBeVisible();
 
   await guess(page, 'zq');
-  await expect(toast(page, 'Not in word list')).toBeVisible();
+  await expect(toast(page, 'Not a word we know')).toBeVisible();
   await expect(tiles(page, 0).nth(4)).toHaveText('q');
   await expect(tiles(page, 0).first()).toHaveAttribute('data-state', 'tbd');
 
@@ -114,7 +114,7 @@ test('keeps progress after a reload and reopens the result', async ({ page }) =>
   await expect(page.locator('#splash-primary')).toHaveText('See stats');
   await startPlaying(page);
   await expect(page.locator('#stats-dialog')).toBeVisible();
-  await expect(page.locator('#result-title')).toHaveText('Impressive!');
+  await expect(page.locator('#result-title')).toHaveText('Excellent!');
 });
 
 test('the on-screen keyboard types, deletes and submits', async ({ page }) => {
@@ -191,7 +191,7 @@ test('hard mode makes revealed hints mandatory', async ({ page }) => {
   await page.locator('#stats-button').click();
   await page.locator('#share-button').click();
   const text = await page.evaluate(() => navigator.clipboard.readText());
-  expect(text.split('\n')[0]).toBe(`Wordle Clone #${TODAY_PUZZLE} 2/6*`);
+  expect(text.split('\n')[0]).toBe(`Voila #${TODAY_PUZZLE} 2/6*`);
 });
 
 test('hard mode cannot be switched on partway through a round', async ({ page }) => {
@@ -199,7 +199,7 @@ test('hard mode cannot be switched on partway through a round', async ({ page })
   await guess(page, FIRST_WRONG);
   await page.locator('#settings-button').click();
   await page.locator('label:has(#hard-mode)').click();
-  await expect(toast(page, 'Hard mode can only be turned on at the start of a round')).toBeVisible();
+  await expect(toast(page, 'Turn on Hard Mode before your first guess')).toBeVisible();
   await expect(page.locator('#hard-mode')).not.toBeChecked();
 });
 
@@ -332,7 +332,7 @@ test('works offline after the first visit', async ({ page, context }) => {
 test.describe('welcome screen', () => {
   test("introduces today's puzzle and holds the game until Play", async ({ page }) => {
     await openGame(page, { play: false });
-    await expect(page.locator('#splash-message')).toHaveText(/^Get 6 chances to guess a 5-/);
+    await expect(page.locator('#splash-message')).toHaveText(/^Find the hidden five-/);
     await expect(page.locator('#splash-date')).toHaveText('October 5, 2026');
     await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE}`);
     // No sign-in without Firebase set up, and nothing else to offer yet.
@@ -350,7 +350,7 @@ test.describe('welcome screen', () => {
     await openGame(page);
     await guess(page, FIRST_WRONG);
     await page.reload();
-    await expect(page.locator('#splash-message')).toHaveText("You've made 1 of 6 guesses. Keep it up!");
+    await expect(page.locator('#splash-message')).toHaveText("1 guess down, 5 to go. You've got this.");
     await expect(page.locator('#splash-primary')).toHaveText('Continue');
     await startPlaying(page);
     await expectScoredRow(page, 0, FIRST_WRONG, TODAY_ANSWER);
@@ -361,7 +361,7 @@ test.describe('welcome screen', () => {
     for (const word of wrongWords(TODAY_ANSWER, 6)) await guess(page, word);
     await expect(page.locator('#stats-dialog')).toBeVisible();
     await page.reload();
-    await expect(page.locator('#splash-message')).toHaveText('So close! A new puzzle arrives at midnight.');
+    await expect(page.locator('#splash-message')).toHaveText('Not this time. A new word arrives at midnight.');
     await expect(page.locator('#splash-primary')).toHaveText('See stats');
 
     await page.locator('#splash-secondary', { hasText: 'Play Unlimited' }).click();

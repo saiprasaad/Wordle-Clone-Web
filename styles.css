@@ -37,6 +37,7 @@
   --color-danger: #c9372c;
   --color-danger-text: #b3261e;
   --color-splash: #e3e3e1;
+  --color-brand: #6ca965;
   --color-focus: #1d6ae5;
   --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.18);
   --header-height: 52px;
@@ -65,6 +66,7 @@
   --color-focus: #7aa7ff;
   --color-danger-text: #ff8a80;
   --color-splash: #1a1a1b;
+  --color-brand: #538d4e;
   --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.6);
 }
 
@@ -233,29 +235,69 @@ svg {
   }
 }
 
-.splash-logo {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 14px;
-}
-
-.splash-logo rect {
-  fill: #6ca965;
-  stroke: none;
-}
-
-.splash-logo path {
-  stroke: #ffffff;
-  stroke-width: 7;
-}
-
 .splash-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2.8rem, 12vw, 3.4rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1;
+}
+
+/* The name spelled in tiles that flip to green one by one, like a solved row. */
+.splash-tiles {
+  --tile-size: clamp(42px, 13vw, 58px);
+  display: flex;
+  gap: 5px;
+}
+
+.splash-tiles .tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #ffffff;
+  font-size: calc(var(--tile-size) * 0.55);
+  animation: splash-tile 500ms ease-in-out both;
+}
+
+.splash-tiles .tile:nth-child(1) {
+  animation-delay: 250ms;
+}
+
+.splash-tiles .tile:nth-child(2) {
+  animation-delay: 380ms;
+}
+
+.splash-tiles .tile:nth-child(3) {
+  animation-delay: 510ms;
+}
+
+.splash-tiles .tile:nth-child(4) {
+  animation-delay: 640ms;
+}
+
+.splash-tiles .tile:nth-child(5) {
+  animation-delay: 770ms;
+}
+
+/* Blank until the tile is edge-on halfway through the flip, then green. */
+@keyframes splash-tile {
+  0% {
+    transform: rotateX(0);
+    border-color: var(--color-tile-border-filled);
+    background: transparent;
+    color: var(--color-text);
+  }
+  49.9% {
+    border-color: var(--color-tile-border-filled);
+    background: transparent;
+    color: var(--color-text);
+  }
+  50% {
+    transform: rotateX(-90deg);
+    border-color: var(--color-brand);
+    background: var(--color-brand);
+    color: #ffffff;
+  }
+  100% {
+    transform: rotateX(0);
+  }
 }
 
 .splash-greeting {
@@ -1251,5 +1293,9 @@ svg {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .splash-tiles .tile {
+    animation: none;
   }
 }

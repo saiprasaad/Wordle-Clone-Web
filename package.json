@@ -1,8 +1,8 @@
 {
-  "name": "wordle-clone-web",
+  "name": "voila",
   "version": "2.0.0",
   "private": true,
-  "description": "A fast, accessible, installable Wordle clone with daily and unlimited play.",
+  "description": "Voila: a fast, accessible, installable word-guessing game with daily and unlimited play.",
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.js",

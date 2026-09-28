@@ -29,8 +29,8 @@ import { isAnyDialogOpen, setupDialog } from './ui/dialogs.js';
 import { createKeyboard } from './ui/keyboard.js';
 import { clearToasts, showToast } from './ui/toast.js';
 
-const TITLE = 'Wordle Clone';
-const PRAISE = ['Genius', 'Magnificent', 'Impressive', 'Splendid', 'Great', 'Phew'];
+const TITLE = 'Voila';
+const PRAISE = ['Legendary', 'Brilliant', 'Excellent', 'Nicely done', 'Well played', 'Just in time'];
 const RECENT_WORDS_KEPT = 300;
 const DEFINITION_MAX_LENGTH = 180;
 
@@ -232,8 +232,8 @@ async function submitGuess() {
   const row = game.guesses.length;
   const guess = inputs[which];
 
-  if (guess.length < WORD_LENGTH) return rejectGuess(row, 'Not enough letters');
-  if (!isValidWord(guess)) return rejectGuess(row, 'Not in word list');
+  if (guess.length < WORD_LENGTH) return rejectGuess(row, 'Needs five letters');
+  if (!isValidWord(guess)) return rejectGuess(row, 'Not a word we know');
   // Hard mode is locked in for the round once the first guess is made.
   const hardMode = row === 0 ? settings.hardMode : game.hardMode;
   const violation = hardMode && hardModeViolation(guess, game.guesses, game.answer);
@@ -558,7 +558,7 @@ function onHardModeChange() {
   const midRound = statusOf(game) === 'playing' && game.guesses.length > 0;
   if (hardModeInput.checked && midRound) {
     hardModeInput.checked = false;
-    showToast('Hard mode can only be turned on at the start of a round', { duration: 2400 });
+    showToast('Turn on Hard Mode before your first guess', { duration: 2400 });
     return;
   }
   changeSyncedSetting('hardMode', hardModeInput.checked);
@@ -712,17 +712,18 @@ function renderSplash() {
   greeting.hidden = !user;
   if (user) greeting.textContent = `Welcome back, ${(user.name || user.email).split(/[\s@]/)[0]}!`;
 
-  // The word joiner keeps "5-letter" from breaking across lines.
-  let message = 'Get 6 chances to guess a 5-\u2060letter word.';
+  // The word joiner keeps "five-letter" from breaking across lines.
+  let message = 'Find the hidden five-\u2060letter word in six guesses.';
   let primary = ['Play', playDaily];
   if (status === 'won') {
-    message = "Great job on today's puzzle! Check out your progress.";
+    message = "You solved today's word. Nicely done!";
     primary = ['See stats', showDailyStats];
   } else if (status === 'lost') {
-    message = 'So close! A new puzzle arrives at midnight.';
+    message = 'Not this time. A new word arrives at midnight.';
     primary = ['See stats', showDailyStats];
   } else if (game.guesses.length > 0) {
-    message = `You've made ${game.guesses.length} of 6 guesses. Keep it up!`;
+    const made = game.guesses.length;
+    message = `${made} ${made === 1 ? 'guess' : 'guesses'} down, ${6 - made} to go. You've got this.`;
     primary = ['Continue', playDaily];
   }
   $('splash-message').textContent = message;

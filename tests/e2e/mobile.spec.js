@@ -94,6 +94,6 @@ test('shares through the native share sheet on touch screens', async ({ page }) 
   await tapWord(page, TODAY_ANSWER);
   await page.locator('#share-button').tap();
   await expect.poll(() => page.evaluate(() => window.sharedText)).toContain(
-    `Wordle Clone #${TODAY_PUZZLE} 1/6`,
+    `Voila #${TODAY_PUZZLE} 1/6`,
   );
 });

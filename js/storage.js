@@ -2,6 +2,7 @@
 // (private browsing, strict privacy settings), so failures are swallowed and
 // the game keeps working without persistence.
 
+// Kept from the game's earlier name so saved progress carries over.
 const PREFIX = 'wordle-clone:';
 
 export function load(key, fallback) {

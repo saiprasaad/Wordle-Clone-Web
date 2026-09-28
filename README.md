@@ -1,6 +1,6 @@
-# Wordle Clone
+# Voila
 
-Guess the hidden five-letter word in six tries. A fast, accessible word game
+Find the hidden five-letter word in six guesses. A fast, accessible word game
 that runs in any modern browser, installs like an app, and works offline.
 
 **Play it at [saiprasaad.github.io/Wordle-Clone-Web](https://saiprasaad.github.io/Wordle-Clone-Web/)**
@@ -165,7 +165,10 @@ and profile photo that Google shares at sign-in. **Settings → Delete account**
 
 ## Credits
 
-Inspired by [Wordle](https://www.nytimes.com/games/wordle/) by Josh Wardle, now published by The
-New York Times. This is an independent fan project with no affiliation. The fonts are Libre
-Franklin and Rokkitt, under the SIL Open Font License. The original Flutter
-version of this clone lives in [saiprasaad/Wordle-Clone](https://github.com/saiprasaad/Wordle-Clone).
+Voila is an independent game. Its rules are inspired by
+[Wordle](https://www.nytimes.com/games/wordle/), created by Josh Wardle and now owned by The New
+York Times, but Voila is not affiliated with or endorsed by either. Wordle is a trademark of The
+New York Times Company.
+
+The fonts are Libre Franklin and Rokkitt, under the SIL Open Font License. The original Flutter
+version of this game lives in [saiprasaad/Wordle-Clone](https://github.com/saiprasaad/Wordle-Clone).
