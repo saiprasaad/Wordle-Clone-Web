@@ -9,7 +9,14 @@ import {
   letterStates,
 } from './game.js';
 import { PROFILE_SCHEMA, mergeProfiles, readGame, readSettings, sameProfile } from './profile.js';
-import { dailyAnswer, msUntilNextPuzzle, puzzleNumber, randomAnswer } from './puzzle.js';
+import {
+  dailyAnswer,
+  msUntilNextPuzzle,
+  nextPuzzleTime,
+  puzzleDate,
+  puzzleNumber,
+  randomAnswer,
+} from './puzzle.js';
 import {
   readDailyRecord,
   readUnlimitedRecord,
@@ -466,6 +473,7 @@ function startCountdown() {
   const tick = () => {
     const ready = puzzleNumber() !== games.daily.puzzle;
     $('countdown-time').textContent = ready ? 'Ready!' : formatDuration(msUntilNextPuzzle());
+    $('countdown-when').textContent = ready ? '' : nextPuzzleWhen();
   };
   tick();
   countdownTimer = setInterval(tick, 1000);
@@ -700,6 +708,7 @@ function disarmDelete() {
 
 const splash = $('splash');
 const splashActions = { primary: playDaily, secondary: null };
+let splashTimer = null;
 
 /** Tailors the welcome screen to today's puzzle and the player's account. */
 function renderSplash() {
@@ -719,7 +728,7 @@ function renderSplash() {
     message = "You solved today's word. Nicely done!";
     primary = ['See stats', showDailyStats];
   } else if (status === 'lost') {
-    message = 'Not this time. A new word arrives at midnight.';
+    message = 'Not this time. Better luck with the next word!';
     primary = ['See stats', showDailyStats];
   } else if (game.guesses.length > 0) {
     const made = game.guesses.length;
@@ -744,19 +753,45 @@ function renderSplash() {
   }
   secondary.hidden = !splashActions.secondary;
 
-  // The puzzle's own date, which is yesterday's while an unfinished game
-  // carries on past midnight.
-  const date = new Date();
-  date.setDate(date.getDate() - (puzzleNumber() - game.puzzle));
-  $('splash-date').textContent = new Intl.DateTimeFormat(undefined, {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
-  $('splash-number').textContent = `No. ${game.puzzle.toLocaleString()}`;
+  $('splash-number').textContent = `Daily puzzle #${game.puzzle.toLocaleString()}`;
+  $('splash-date').textContent = PUZZLE_DATE.format(puzzleDate(game.puzzle));
+
+  // Once today's puzzle is done, say when the next one arrives, and why then.
+  const next = $('splash-next');
+  next.hidden = status === 'playing';
+  clearTimeout(splashTimer);
+  if (!next.hidden) {
+    next.textContent = `Next puzzle in ${formatWait(msUntilNextPuzzle())}, ${nextPuzzleWhen()}`;
+    splashTimer = setTimeout(renderSplash, 30_000);
+  }
+}
+
+// puzzleDate() gives midnight UTC on the puzzle's date, so format it in UTC.
+const PUZZLE_DATE = new Intl.DateTimeFormat(undefined, {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const LOCAL_TIME = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+
+/** "at midnight US Eastern Time", with the player's own time if that differs. */
+function nextPuzzleWhen() {
+  const at = new Date(nextPuzzleTime());
+  const elsewhere = at.getHours() !== 0 || at.getMinutes() !== 0;
+  return `at midnight US Eastern Time${elsewhere ? ` (${LOCAL_TIME.format(at)} your time)` : ''}`;
+}
+
+/** Time left, rounded up to the minute: "7h 12m", "12h" or "42m". */
+function formatWait(ms) {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
+  const hours = Math.floor(minutes / 60);
+  if (!hours) return `${minutes}m`;
+  return minutes % 60 ? `${hours}h ${minutes % 60}m` : `${hours}h`;
 }
 
 function dismissSplash() {
+  clearTimeout(splashTimer);
   splash.inert = true; // Ignore further taps while it fades out.
   for (const element of document.querySelectorAll('.app-header, .game')) element.inert = false;
   const hide = () => {

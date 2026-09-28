@@ -9,7 +9,8 @@ that runs in any modern browser, installs like an app, and works offline.
 
 ## Features
 
-- **Daily puzzle.** Everyone gets the same word each day, and a new one arrives at local midnight.
+- **Daily puzzle.** Everyone gets the same word, and a new one arrives at midnight US Eastern Time,
+  at the same moment for every player.
   A welcome screen shows the date and puzzle number, and offers to continue a game in progress or
   see today's result.
 - **Unlimited mode.** Play as many random words as you like. It never repeats recent words or
