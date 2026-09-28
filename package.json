@@ -1,13 +1,15 @@
 {
-  "name": "wordle-clone-web",
+  "name": "voila",
   "version": "2.0.0",
   "private": true,
-  "description": "A fast, accessible, installable Wordle clone with daily and unlimited play.",
+  "description": "Voila: a fast, accessible, installable word-guessing game with daily and unlimited play.",
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.js",
     "test": "node --test \"tests/unit/*.test.js\"",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "emulators": "npx --yes firebase-tools@15.31.0 emulators:start --project demo-wordle --only auth,firestore",
+    "test:e2e:ci": "npx --yes firebase-tools@15.31.0 emulators:exec --project demo-wordle --only auth,firestore \"playwright test\""
   },
   "devDependencies": {
     "@playwright/test": "1.56.1"

@@ -52,20 +52,20 @@ test('letterStates keeps the best state seen for each letter', () => {
 });
 
 test('hardModeViolation requires green letters to stay in place', () => {
-  assert.equal(hardModeViolation('sword', ['brine'], 'crane'), '2nd letter must be R');
+  assert.equal(hardModeViolation('sword', ['brine'], 'crane'), 'Put R in the 2nd spot');
   assert.equal(hardModeViolation('crane', ['brine'], 'crane'), null);
 });
 
 test('hardModeViolation requires revealed letters to be reused', () => {
-  assert.equal(hardModeViolation('blank', ['react'], 'crane'), 'Guess must contain R');
-  assert.equal(hardModeViolation('acres', ['react'], 'crane'), '3rd letter must be A');
-  assert.equal(hardModeViolation('chart', ['react'], 'crane'), 'Guess must contain E');
-  assert.equal(hardModeViolation('spare', ['react'], 'crane'), 'Guess must contain C');
+  assert.equal(hardModeViolation('blank', ['react'], 'crane'), 'Use R in your guess');
+  assert.equal(hardModeViolation('acres', ['react'], 'crane'), 'Put A in the 3rd spot');
+  assert.equal(hardModeViolation('chart', ['react'], 'crane'), 'Use E in your guess');
+  assert.equal(hardModeViolation('spare', ['react'], 'crane'), 'Use C in your guess');
   assert.equal(hardModeViolation('crane', ['react'], 'crane'), null);
 });
 
 test('hardModeViolation counts duplicate letters that were revealed', () => {
-  assert.equal(hardModeViolation('elbow', ['eerie'], 'sheep'), 'Guess must contain E twice');
+  assert.equal(hardModeViolation('elbow', ['eerie'], 'sheep'), 'Use E twice in your guess');
   assert.equal(hardModeViolation('tepee', ['eerie'], 'sheep'), null);
 });
 

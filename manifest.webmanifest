@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Wordle Clone",
-  "short_name": "Wordle",
-  "description": "Guess the hidden five-letter word in six tries. A new daily puzzle plus unlimited play.",
+  "name": "Voila",
+  "short_name": "Voila",
+  "description": "Find the hidden five-letter word in six guesses. A new daily puzzle plus unlimited play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

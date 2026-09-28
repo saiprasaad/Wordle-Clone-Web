@@ -8,14 +8,25 @@ export const TODAY = new Date('2026-10-05T12:00:00-04:00');
 export const TODAY_PUZZLE = 8;
 export const TODAY_ANSWER = dailyAnswer(TODAY_PUZZLE);
 
-/** Opens the game at a fixed date, skipping the first-visit help by default. */
-export async function openGame(page, { seenHelp = true, time = TODAY } = {}) {
-  await page.clock.setFixedTime(time);
+/**
+ * Opens the game at a fixed date (or the real one when `time` is null),
+ * skipping the first-visit help by default. Presses Play on the welcome
+ * screen unless `play` is false.
+ */
+export async function openGame(page, { seenHelp = true, time = TODAY, path = './', play = true } = {}) {
+  if (time) await page.clock.setFixedTime(time);
   if (seenHelp) {
     await page.addInitScript(() => localStorage.setItem('wordle-clone:seen-help', 'true'));
   }
-  await page.goto('./');
+  await page.goto(path);
   await expect(page.locator('#board .tile')).toHaveCount(30);
+  if (play) await startPlaying(page);
+}
+
+/** Leaves the welcome screen with its main button: Play, Continue or See stats. */
+export async function startPlaying(page) {
+  await page.locator('#splash-primary').click();
+  await expect(page.locator('#splash')).toBeHidden();
 }
 
 export async function guess(page, word) {

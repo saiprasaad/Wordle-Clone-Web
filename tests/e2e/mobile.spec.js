@@ -42,6 +42,24 @@ for (const viewport of [
   });
 }
 
+test('the welcome screen fits a small phone', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openGame(page, { play: false });
+  const layout = await page.evaluate(() => {
+    const root = document.documentElement;
+    const content = document.querySelector('.splash-content').getBoundingClientRect();
+    const play = document.getElementById('splash-primary').getBoundingClientRect();
+    return {
+      horizontalScroll: root.scrollWidth > root.clientWidth,
+      fitsWidth: content.left >= 0 && content.right <= window.innerWidth,
+      playVisible: play.bottom <= window.innerHeight,
+    };
+  });
+  expect(layout).toEqual({ horizontalScroll: false, fitsWidth: true, playVisible: true });
+  await page.locator('#splash-primary').tap();
+  await expect(page.locator('#splash')).toBeHidden();
+});
+
 test('puts the board beside the keyboard on a sideways phone', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
   await openGame(page);
@@ -76,6 +94,6 @@ test('shares through the native share sheet on touch screens', async ({ page }) 
   await tapWord(page, TODAY_ANSWER);
   await page.locator('#share-button').tap();
   await expect.poll(() => page.evaluate(() => window.sharedText)).toContain(
-    `Wordle Clone #${TODAY_PUZZLE} 1/6`,
+    `Voila #${TODAY_PUZZLE} 1/6`,
   );
 });

@@ -2,6 +2,7 @@
 // (private browsing, strict privacy settings), so failures are swallowed and
 // the game keeps working without persistence.
 
+// Kept from the game's earlier name so saved progress carries over.
 const PREFIX = 'wordle-clone:';
 
 export function load(key, fallback) {
@@ -18,6 +19,14 @@ export function save(key, value) {
     localStorage.setItem(PREFIX + key, JSON.stringify(value));
   } catch {
     // Ignore: progress simply won't survive a reload.
+  }
+}
+
+export function remove(key) {
+  try {
+    localStorage.removeItem(PREFIX + key);
+  } catch {
+    // Ignore, as above.
   }
 }
 

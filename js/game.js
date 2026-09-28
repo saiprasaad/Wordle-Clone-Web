@@ -81,7 +81,7 @@ export function hardModeViolation(guess, previousGuesses, answer) {
     for (let i = 0; i < WORD_LENGTH; i++) {
       const letter = previous[i];
       if (evaluation[i] === CORRECT && guess[i] !== letter) {
-        return `${ORDINALS[i]} letter must be ${letter.toUpperCase()}`;
+        return `Put ${letter.toUpperCase()} in the ${ORDINALS[i]} spot`;
       }
       if (evaluation[i] !== ABSENT) revealed[letter] = (revealed[letter] ?? 0) + 1;
     }
@@ -93,7 +93,7 @@ export function hardModeViolation(guess, previousGuesses, answer) {
     const used = [...guess].filter((l) => l === letter).length;
     if (used < count) {
       const times = count === 1 ? '' : count === 2 ? ' twice' : ` ${count} times`;
-      return `Guess must contain ${letter.toUpperCase()}${times}`;
+      return `Use ${letter.toUpperCase()}${times} in your guess`;
     }
   }
   return null;

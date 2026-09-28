@@ -22,8 +22,18 @@ jobs:
         run: npm test
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: End-to-end tests
-        run: npm run test:e2e
+      # The Firestore emulator needs Java 21 or later.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Cache the Firebase emulators
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-15.31.0
+      - name: End-to-end tests (against the Firebase emulators)
+        run: npm run test:e2e:ci
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7

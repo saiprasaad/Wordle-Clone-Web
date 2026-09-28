@@ -1,3 +1,19 @@
+/* ---------- Fonts (self-hosted, SIL Open Font License) ---------- */
+
+@font-face {
+  font-family: 'Libre Franklin';
+  src: url('fonts/libre-franklin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rokkitt';
+  src: url('fonts/rokkitt.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 /* ---------- Theme ---------- */
 
 :root {
@@ -19,11 +35,15 @@
   --color-switch-off: #878a8c;
   --color-button: #3f7d3b;
   --color-danger: #c9372c;
+  --color-danger-text: #b3261e;
+  --color-splash: #e3e3e1;
+  --color-brand: #6ca965;
   --color-focus: #1d6ae5;
   --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.18);
   --header-height: 52px;
   --key-height: clamp(44px, 7.4dvh, 58px);
-  --font: 'Helvetica Neue', Arial, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: 'Libre Franklin', 'Helvetica Neue', Arial, system-ui, sans-serif;
+  --font-display: 'Rokkitt', Georgia, 'Times New Roman', serif;
 }
 
 :root[data-theme='dark'] {
@@ -44,6 +64,9 @@
   --color-toast-text: #121213;
   --color-switch-off: #565758;
   --color-focus: #7aa7ff;
+  --color-danger-text: #ff8a80;
+  --color-splash: #1a1a1b;
+  --color-brand: #538d4e;
   --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.6);
 }
 
@@ -170,10 +193,190 @@ svg {
 
 .title {
   margin: 0;
-  font-size: clamp(1.6rem, 6vw, 2.1rem);
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 7vw, 2.3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1;
+}
+
+/* ---------- Welcome screen ---------- */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  overflow-y: auto;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  background: var(--color-splash);
+  color: var(--color-text);
+  transition: opacity 220ms ease;
+}
+
+.splash[data-leaving] {
+  opacity: 0;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 420px;
+  margin: auto;
+  text-align: center;
+  animation: splash-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.splash-title {
+  margin: 0;
+}
+
+/* The name spelled in tiles that flip to green one by one, like a solved row. */
+.splash-tiles {
+  --tile-size: clamp(42px, 13vw, 58px);
+  display: flex;
+  gap: 5px;
+}
+
+.splash-tiles .tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #ffffff;
+  font-size: calc(var(--tile-size) * 0.55);
+  animation: splash-tile 500ms ease-in-out both;
+}
+
+.splash-tiles .tile:nth-child(1) {
+  animation-delay: 250ms;
+}
+
+.splash-tiles .tile:nth-child(2) {
+  animation-delay: 380ms;
+}
+
+.splash-tiles .tile:nth-child(3) {
+  animation-delay: 510ms;
+}
+
+.splash-tiles .tile:nth-child(4) {
+  animation-delay: 640ms;
+}
+
+.splash-tiles .tile:nth-child(5) {
+  animation-delay: 770ms;
+}
+
+/* Blank until the tile is edge-on halfway through the flip, then green. */
+@keyframes splash-tile {
+  0% {
+    transform: rotateX(0);
+    border-color: var(--color-tile-border-filled);
+    background: transparent;
+    color: var(--color-text);
+  }
+  49.9% {
+    border-color: var(--color-tile-border-filled);
+    background: transparent;
+    color: var(--color-text);
+  }
+  50% {
+    transform: rotateX(-90deg);
+    border-color: var(--color-brand);
+    background: var(--color-brand);
+    color: #ffffff;
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+
+.splash-greeting {
+  margin: 18px 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.splash-message {
+  max-width: 15em;
+  margin: 12px 0 0;
+  font-size: clamp(1.45rem, 6vw, 1.8rem);
+  font-weight: 300;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.splash-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.splash-help {
+  margin-top: 18px;
+  font-size: 0.95rem;
+}
+
+.splash-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 30px 0 0;
+  font-size: 0.95rem;
+}
+
+.splash-date {
+  font-weight: 700;
+}
+
+.pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 150px;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid var(--color-text);
+  border-radius: 999px;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pill-button-outline {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.pill-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+@media (hover: hover) {
+  .pill-button:hover {
+    filter: brightness(1.15);
+  }
+
+  .pill-button-outline:hover {
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
+    filter: none;
+  }
 }
 
 /* ---------- Game layout ---------- */
@@ -520,10 +723,19 @@ svg {
 
 /* ---------- Help ---------- */
 
+.dialog-title-display {
+  margin: 6px 36px 4px 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+
 .help-lead {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 300;
 }
 
 .help-list {
@@ -579,8 +791,9 @@ svg {
 
 .result-title {
   margin: 4px 36px 12px;
-  font-size: 1.35rem;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .answer-tiles {
@@ -761,6 +974,32 @@ svg {
   }
 }
 
+/* ---------- Links styled as buttons ---------- */
+
+.link-button {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-button-danger {
+  color: var(--color-danger-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sync-prompt {
+  margin: 16px 0 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 /* ---------- Settings ---------- */
 
 .settings-list {
@@ -834,6 +1073,124 @@ svg {
 .switch-input:focus-visible + .switch {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+.account {
+  padding: 2px 0 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--color-correct);
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.account-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+
+.account-text,
+.account-note,
+.account-status {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.account-text {
+  margin: 0 0 12px;
+}
+
+.account-note {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+}
+
+/* Follows Google's sign-in button guidelines. */
+.google-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 16px 0 12px;
+  border: 1px solid #747775;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:root[data-theme='dark'] .google-button {
+  border-color: #8e918f;
+  background: #131314;
+  color: #e3e3e3;
+}
+
+.google-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.google-logo {
+  width: 20px;
+  height: 20px;
+  stroke: none;
+}
+
+.account-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.account-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.account-email {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.account-status {
+  margin: 6px 0 14px;
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.button-small {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 0.9rem;
 }
 
 .settings-footer {
@@ -936,5 +1293,9 @@ svg {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .splash-tiles .tile {
+    animation: none;
   }
 }

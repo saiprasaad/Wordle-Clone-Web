@@ -6,8 +6,9 @@ import { writeFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
 const GREEN = '#6ca965';
+// A white V, for Voila.
 const LETTER =
-  '<path d="M15 21l8.5 24L32 26.5 40.5 45 49 21" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>';
+  '<path d="M19 20l13 25 13-25" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>';
 
 // Rounded tile for favicons and "any" purpose icons.
 const tile = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${GREEN}"/>${LETTER}</svg>`;

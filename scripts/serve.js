@@ -19,13 +19,22 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
+// Lets pages served locally reach the Firebase emulators (see firebase.json),
+// which the production Content-Security-Policy doesn't allow.
+function allowEmulators(html) {
+  return html
+    .replace("connect-src 'self'", "connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8085")
+    .replace('frame-src ', 'frame-src http://127.0.0.1:9099 ');
+}
+
 createServer(async (request, response) => {
   try {
     let path = normalize(decodeURIComponent(new URL(request.url, 'http://localhost').pathname));
     if (path.endsWith(sep) || path.endsWith('/')) path += 'index.html';
     const file = join(ROOT, path);
     if (!file.startsWith(ROOT)) throw new Error('Outside the site root');
-    const body = await readFile(file);
+    let body = await readFile(file);
+    if (extname(file) === '.html') body = allowEmulators(body.toString());
     response.writeHead(200, {
       'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream',
       'Cache-Control': 'no-cache',
