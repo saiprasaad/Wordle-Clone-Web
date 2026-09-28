@@ -335,7 +335,7 @@ test.describe('welcome screen', () => {
     await expect(page.locator('#splash-message')).toHaveText(/^Find the hidden five-/);
     await expect(page.locator('#splash-date')).toHaveText('October 5, 2026');
     await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE}`);
-    // No sign-in without Firebase set up, and nothing else to offer yet.
+    // No sign-in in local copies without the emulators, and nothing else to offer yet.
     await expect(page.locator('#splash-secondary')).toBeHidden();
 
     await page.keyboard.type('abc');

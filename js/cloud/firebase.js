@@ -12,13 +12,21 @@ const EMULATOR_PROJECT = {
   projectId: 'demo-wordle',
 };
 
-function usesEmulators() {
-  const { hostname, search } = window.location;
-  return new URLSearchParams(search).has('emulators') && ['localhost', '127.0.0.1'].includes(hostname);
+function runningLocally() {
+  return ['localhost', '127.0.0.1'].includes(window.location.hostname);
 }
 
+function usesEmulators() {
+  return runningLocally() && new URLSearchParams(window.location.search).has('emulators');
+}
+
+/**
+ * Accounts are on wherever the game is published once FIREBASE_CONFIG is set.
+ * Local copies, used for development and tests, never touch the real project:
+ * they use the emulators with ?emulators, or go without accounts.
+ */
 export function cloudAvailable() {
-  return Boolean(FIREBASE_CONFIG) || usesEmulators();
+  return usesEmulators() || (Boolean(FIREBASE_CONFIG) && !runningLocally());
 }
 
 let connection = null;
