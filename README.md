@@ -3,7 +3,7 @@
 Find the hidden five-letter word in six guesses. A fast, accessible word game
 that runs in any modern browser, installs like an app, and works offline.
 
-**Play it at [saiprasaad.github.io/Wordle-Clone-Web](https://saiprasaad.github.io/Wordle-Clone-Web/)**
+**Play it at [saiprasaad.github.io/voila](https://saiprasaad.github.io/voila/)**
 
 ![The welcome screen, a game in progress, and the result card in dark mode](docs/screenshot.png)
 
@@ -70,7 +70,7 @@ pull request.
 The site is static and every path is relative, so any static host works, from a domain root or a
 subfolder. Every merge to `main` goes live automatically on:
 
-- **GitHub Pages**, at [saiprasaad.github.io/Wordle-Clone-Web](https://saiprasaad.github.io/Wordle-Clone-Web/).
+- **GitHub Pages**, at [saiprasaad.github.io/voila](https://saiprasaad.github.io/voila/).
   It is served from the root of `main` (**Settings → Pages → Deploy from a branch**).
 - **Netlify**, configured by [`netlify.toml`](netlify.toml): no build step, and security headers
   that GitHub Pages can't set. To connect it, choose **Add new site → Import an existing project**
