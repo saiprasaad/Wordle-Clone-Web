@@ -23,3 +23,16 @@ Definitions shown after a game are fetched at runtime from the
 [Wiktionary](https://en.wiktionary.org/) under the
 [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) license. Each definition links
 back to its Wiktionary entry.
+
+## Fonts
+
+- **Libre Franklin**, copyright 2020 The Libre Franklin Project Authors
+  (https://github.com/googlefonts/Libre-Franklin).
+- **Rokkitt**, copyright 2016 The Rokkitt Project Authors
+  (https://github.com/googlefonts/RokkittFont).
+
+Both are licensed under the SIL Open Font License, Version 1.1, reproduced in
+[licenses/LibreFranklin-OFL.txt](licenses/LibreFranklin-OFL.txt) and
+[licenses/Rokkitt-OFL.txt](licenses/Rokkitt-OFL.txt). The files in `fonts/` are the unmodified
+Latin variable-weight builds packaged by [Fontsource](https://fontsource.org/)
+(`@fontsource-variable/libre-franklin` and `@fontsource-variable/rokkitt`, version 5.3.0).

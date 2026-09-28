@@ -6,7 +6,7 @@
 import { expect, test } from '@playwright/test';
 import { evaluateGuess } from '../../js/game.js';
 import { ANSWERS } from '../../js/words.js';
-import { guess, openGame, savedGame, tiles, toast } from './helpers.js';
+import { guess, openGame, savedGame, startPlaying, tiles, toast } from './helpers.js';
 
 test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
@@ -22,7 +22,7 @@ test.beforeAll(async () => {
  * as the given player. In emulator mode "Sign in with Google" uses a stand-in
  * Google identity instead of Google's sign-in window (see js/cloud/firebase.js).
  */
-async function openDevice(browser, email) {
+async function openDevice(browser, email, { play = true } = {}) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const cspErrors = [];
@@ -32,7 +32,7 @@ async function openDevice(browser, email) {
   await page.addInitScript((identity) => {
     sessionStorage.setItem('wordle-clone:emulator-user', JSON.stringify(identity));
   }, { email, name: 'Test Player' });
-  await openGame(page, { time: null, path: './?emulators' });
+  await openGame(page, { time: null, path: './?emulators', play });
   return { page, context, cspErrors };
 }
 
@@ -75,8 +75,9 @@ test('progress and stats follow the player to another device', async ({ browser 
   // Back on the phone, the finished puzzle and its stats have arrived.
   await expect(async () => {
     await phone.page.reload();
-    await expect(phone.page.locator('#stats-dialog')).toBeVisible({ timeout: 2000 });
+    await expect(phone.page.locator('#splash-primary')).toHaveText('See stats', { timeout: 2000 });
   }).toPass();
+  await startPlaying(phone.page);
   await expect(phone.page.locator('#result-title')).toHaveText('Impressive!');
   await expect(phone.page.locator('#stat-played')).toHaveText('1');
   await expect(phone.page.locator('#stat-streak')).toHaveText('1');
@@ -134,4 +135,18 @@ test('signing out keeps progress, and deleting the account removes the cloud cop
   const laptop = await openDevice(browser, email);
   await signIn(laptop.page);
   await expect(tiles(laptop.page, 0).first()).toHaveAttribute('data-state', 'empty');
+});
+
+test('the welcome screen offers sign-in and greets the player', async ({ browser }, testInfo) => {
+  const phone = await openDevice(browser, uniqueEmail(testInfo), { play: false });
+  const signInButton = phone.page.locator('#splash-secondary');
+  await expect(signInButton).toHaveText('Sign in');
+  await signInButton.click();
+  await expect(phone.page.locator('#splash-greeting')).toHaveText('Welcome back, Test!');
+  await expect(signInButton).toBeHidden();
+
+  await startPlaying(phone.page);
+  await phone.page.locator('#settings-button').click();
+  await expect(phone.page.locator('#account-status')).toHaveText('Your stats and progress are synced.');
+  expect(phone.cspErrors).toEqual([]);
 });

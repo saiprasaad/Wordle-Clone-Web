@@ -32,6 +32,8 @@ const APP_SHELL = [
   'js/ui/dialogs.js',
   'js/ui/keyboard.js',
   'js/ui/toast.js',
+  'fonts/libre-franklin.woff2',
+  'fonts/rokkitt.woff2',
   'icons/favicon.svg',
   'icons/favicon-32.png',
   'icons/apple-touch-icon.png',

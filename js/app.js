@@ -23,7 +23,7 @@ import { shareText } from './share.js';
 import { definitionUrl, fetchDefinition } from './definition.js';
 import * as storage from './storage.js';
 import { createSync } from './cloud/sync.js';
-import { announce, describeGuess } from './ui/a11y.js';
+import { announce, describeGuess, prefersReducedMotion } from './ui/a11y.js';
 import { createBoard } from './ui/board.js';
 import { isAnyDialogOpen, setupDialog } from './ui/dialogs.js';
 import { createKeyboard } from './ui/keyboard.js';
@@ -179,6 +179,7 @@ function render() {
   $('puzzle-number').textContent = `#${games.daily.puzzle}`;
   newWordButton.hidden = mode !== 'unlimited';
   disarmGiveUp();
+  renderSplash();
 }
 
 function updateNewWordButton() {
@@ -279,7 +280,6 @@ function rejectGuess(row, message) {
 function switchMode(next) {
   if (next === mode) return;
   mode = next;
-  storage.save('mode', mode);
   clearToasts();
   refreshDailyPuzzle();
   render();
@@ -291,10 +291,7 @@ function startUnlimitedGame() {
   sync.changed();
   statsDialog.close();
   clearToasts();
-  if (mode !== 'unlimited') {
-    mode = 'unlimited';
-    storage.save('mode', mode);
-  }
+  mode = 'unlimited';
   render();
 }
 
@@ -637,6 +634,7 @@ function applyProfile(incoming) {
 }
 
 function renderAccount({ available, status, user }) {
+  renderSplash();
   $('account').hidden = !available;
   $('sync-prompt').hidden = !available || Boolean(user);
   if (!available) return;
@@ -644,6 +642,7 @@ function renderAccount({ available, status, user }) {
   $('account-signed-in').hidden = !user;
   $('sign-in-button').disabled = status === 'connecting';
   if (!user) return;
+  $('account-avatar').textContent = (user.name || user.email).charAt(0).toUpperCase();
   $('account-name').textContent = user.name || user.email;
   $('account-email').textContent = user.name ? user.email : '';
   $('account-status').textContent = SYNC_STATUS[status] ?? '';
@@ -697,11 +696,114 @@ function disarmDelete() {
   button.textContent = 'Delete account';
 }
 
+// ---------- Welcome screen ----------
+
+const splash = $('splash');
+const splashActions = { primary: playDaily, secondary: null };
+
+/** Tailors the welcome screen to today's puzzle and the player's account. */
+function renderSplash() {
+  if (splash.hidden) return;
+  const game = games.daily;
+  const status = statusOf(game);
+  const { available, status: syncStatus, user } = sync.state;
+
+  const greeting = $('splash-greeting');
+  greeting.hidden = !user;
+  if (user) greeting.textContent = `Welcome back, ${(user.name || user.email).split(/[\s@]/)[0]}!`;
+
+  // The word joiner keeps "5-letter" from breaking across lines.
+  let message = 'Get 6 chances to guess a 5-\u2060letter word.';
+  let primary = ['Play', playDaily];
+  if (status === 'won') {
+    message = "Great job on today's puzzle! Check out your progress.";
+    primary = ['See stats', showDailyStats];
+  } else if (status === 'lost') {
+    message = 'So close! A new puzzle arrives at midnight.';
+    primary = ['See stats', showDailyStats];
+  } else if (game.guesses.length > 0) {
+    message = `You've made ${game.guesses.length} of 6 guesses. Keep it up!`;
+    primary = ['Continue', playDaily];
+  }
+  $('splash-message').textContent = message;
+  $('splash-primary').textContent = primary[0];
+  splashActions.primary = primary[1];
+
+  const secondary = $('splash-secondary');
+  if (available && !user) {
+    secondary.replaceChildren($('sign-in-button').querySelector('.google-logo').cloneNode(true), 'Sign in');
+    secondary.disabled = syncStatus === 'connecting';
+    splashActions.secondary = signIn;
+  } else if (status !== 'playing') {
+    secondary.replaceChildren('Play Unlimited');
+    secondary.disabled = false;
+    splashActions.secondary = playUnlimited;
+  } else {
+    splashActions.secondary = null;
+  }
+  secondary.hidden = !splashActions.secondary;
+
+  // The puzzle's own date, which is yesterday's while an unfinished game
+  // carries on past midnight.
+  const date = new Date();
+  date.setDate(date.getDate() - (puzzleNumber() - game.puzzle));
+  $('splash-date').textContent = new Intl.DateTimeFormat(undefined, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+  $('splash-number').textContent = `No. ${game.puzzle.toLocaleString()}`;
+}
+
+function dismissSplash() {
+  splash.inert = true; // Ignore further taps while it fades out.
+  for (const element of document.querySelectorAll('.app-header, .game')) element.inert = false;
+  const hide = () => {
+    splash.hidden = true;
+    delete splash.dataset.leaving;
+  };
+  if (prefersReducedMotion()) {
+    hide();
+  } else {
+    splash.dataset.leaving = '';
+    setTimeout(hide, 220);
+  }
+}
+
+function playDaily() {
+  dismissSplash();
+  switchMode('daily');
+  if (!storage.load('seen-help', false)) {
+    storage.save('seen-help', true);
+    helpDialog.open();
+  }
+}
+
+function showDailyStats() {
+  dismissSplash();
+  switchMode('daily');
+  openStats();
+}
+
+function playUnlimited() {
+  dismissSplash();
+  if (statusOf(games.unlimited) === 'playing') switchMode('unlimited');
+  else startUnlimitedGame();
+}
+
 // ---------- Keyboard and lifecycle ----------
 
 function onKeyDown(event) {
   if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
-  if (isAnyDialogOpen()) return;
+  if (isAnyDialogOpen()) return; // Dialogs handle their own keys.
+  if (!splash.hidden) {
+    // Enter starts the game from the welcome screen, unless a button has focus.
+    if (event.key === 'Enter' && !event.repeat && !splash.inert && document.activeElement === document.body) {
+      event.preventDefault();
+      splashActions.primary();
+    }
+    return;
+  }
   const key = gameKey(event);
   if (!key) return;
 
@@ -760,16 +862,9 @@ function onStorageChange(key) {
   }
 }
 
-function initialMode() {
-  // A fresh daily puzzle comes first; otherwise resume the last mode played.
-  const dailyUntouched = statusOf(games.daily) === 'playing' && games.daily.guesses.length === 0;
-  return !dailyUntouched && storage.load('mode', 'daily') === 'unlimited' ? 'unlimited' : 'daily';
-}
-
 export function start() {
   applyTheme();
   syncSettingsInputs();
-  mode = initialMode();
   render();
 
   document.addEventListener('keydown', onKeyDown);
@@ -824,13 +919,19 @@ export function start() {
   }
   $('sign-out-button').addEventListener('click', signOut);
   $('delete-account-button').addEventListener('click', onDeleteAccountClick);
-  renderAccount(sync.state);
-  sync.start();
 
-  if (!storage.load('seen-help', false)) {
+  const splashSecondary = $('splash-secondary');
+  $('splash-primary').addEventListener('click', () => splashActions.primary());
+  splashSecondary.addEventListener('click', () => splashActions.secondary?.());
+  for (const event of ['pointerenter', 'pointerdown', 'focus']) {
+    splashSecondary.addEventListener(event, () => {
+      if (splashActions.secondary === signIn) sync.prepare();
+    });
+  }
+  $('splash-help').addEventListener('click', () => {
     storage.save('seen-help', true);
     helpDialog.open();
-  } else if (mode === 'daily' && statusOf(games.daily) !== 'playing') {
-    openStats();
-  }
+  });
+  renderAccount(sync.state);
+  sync.start();
 }

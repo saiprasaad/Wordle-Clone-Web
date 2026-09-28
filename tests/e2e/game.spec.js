@@ -8,6 +8,7 @@ import {
   guess,
   openGame,
   savedGame,
+  startPlaying,
   tiles,
   toast,
   wrongWords,
@@ -100,6 +101,7 @@ test('keeps progress after a reload and reopens the result', async ({ page }) =>
   await guess(page, SECOND_WRONG);
   await page.keyboard.type('ab');
   await page.reload();
+  await startPlaying(page);
 
   await expectScoredRow(page, 0, FIRST_WRONG, TODAY_ANSWER);
   await expectScoredRow(page, 1, SECOND_WRONG, TODAY_ANSWER);
@@ -108,7 +110,9 @@ test('keeps progress after a reload and reopens the result', async ({ page }) =>
   await guess(page, TODAY_ANSWER);
   await expect(page.locator('#stats-dialog')).toBeVisible();
   await page.reload();
-  // A finished daily puzzle shows its result again on the next visit.
+  // A finished daily puzzle offers its result from the welcome screen.
+  await expect(page.locator('#splash-primary')).toHaveText('See stats');
+  await startPlaying(page);
   await expect(page.locator('#stats-dialog')).toBeVisible();
   await expect(page.locator('#result-title')).toHaveText('Impressive!');
 });
@@ -249,7 +253,7 @@ test('shows the help on the first visit only', async ({ page }) => {
   await expect(page.locator('#help-dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await page.reload();
-  await expect(page.locator('#board .tile')).toHaveCount(30);
+  await startPlaying(page);
   await expect(page.locator('#help-dialog')).toBeHidden();
 });
 
@@ -303,10 +307,12 @@ test('other open tabs stay in sync', async ({ page, context }) => {
 
 test('moves on to the next puzzle at midnight', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-05T23:59:30-04:00') });
-  await page.addInitScript(() => localStorage.setItem('wordle-clone:seen-help', 'true'));
-  await page.goto('./');
-  await expect(page.locator('#puzzle-number')).toHaveText(`#${TODAY_PUZZLE}`);
+  await openGame(page, { time: null, play: false });
+  await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE}`);
   await page.clock.fastForward('01:00');
+  await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE + 1}`);
+  await expect(page.locator('#splash-date')).toHaveText('October 6, 2026');
+  await startPlaying(page);
   await expect(page.locator('#puzzle-number')).toHaveText(`#${TODAY_PUZZLE + 1}`);
 });
 
@@ -315,12 +321,65 @@ test('works offline after the first visit', async ({ page, context }) => {
   await page.evaluate(() => navigator.serviceWorker.ready);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator('#board .tile')).toHaveCount(30);
+  await startPlaying(page);
   await guess(page, FIRST_WRONG);
   await expectScoredRow(page, 0, FIRST_WRONG, TODAY_ANSWER);
   // The definition lookup fails quietly and leaves a dictionary link.
   await guess(page, TODAY_ANSWER);
   await expect(page.locator('#definition a')).toHaveText(/Wiktionary/);
+});
+
+test.describe('welcome screen', () => {
+  test("introduces today's puzzle and holds the game until Play", async ({ page }) => {
+    await openGame(page, { play: false });
+    await expect(page.locator('#splash-message')).toHaveText(/^Get 6 chances to guess a 5-/);
+    await expect(page.locator('#splash-date')).toHaveText('October 5, 2026');
+    await expect(page.locator('#splash-number')).toHaveText(`No. ${TODAY_PUZZLE}`);
+    // No sign-in without Firebase set up, and nothing else to offer yet.
+    await expect(page.locator('#splash-secondary')).toBeHidden();
+
+    await page.keyboard.type('abc');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#splash')).toBeHidden();
+    await expect(tiles(page, 0).first()).toHaveAttribute('data-state', 'empty');
+    await guess(page, FIRST_WRONG);
+    await expectScoredRow(page, 0, FIRST_WRONG, TODAY_ANSWER);
+  });
+
+  test('picks up a puzzle in progress', async ({ page }) => {
+    await openGame(page);
+    await guess(page, FIRST_WRONG);
+    await page.reload();
+    await expect(page.locator('#splash-message')).toHaveText("You've made 1 of 6 guesses. Keep it up!");
+    await expect(page.locator('#splash-primary')).toHaveText('Continue');
+    await startPlaying(page);
+    await expectScoredRow(page, 0, FIRST_WRONG, TODAY_ANSWER);
+  });
+
+  test('offers Unlimited once the daily puzzle is done', async ({ page }) => {
+    await openGame(page);
+    for (const word of wrongWords(TODAY_ANSWER, 6)) await guess(page, word);
+    await expect(page.locator('#stats-dialog')).toBeVisible();
+    await page.reload();
+    await expect(page.locator('#splash-message')).toHaveText('So close! A new puzzle arrives at midnight.');
+    await expect(page.locator('#splash-primary')).toHaveText('See stats');
+
+    await page.locator('#splash-secondary', { hasText: 'Play Unlimited' }).click();
+    await expect(page.locator('#splash')).toBeHidden();
+    await expect(page.locator('#mode-switch input[value="unlimited"]')).toBeChecked();
+    await expect(page.locator('#new-word-button')).toBeVisible();
+  });
+
+  test('explains the rules without leaving', async ({ page }) => {
+    await openGame(page, { seenHelp: false, play: false });
+    await page.locator('#splash-help').click();
+    await expect(page.locator('#help-dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#splash')).toBeVisible();
+    // Having read the rules, the player isn't shown them again.
+    await startPlaying(page);
+    await expect(page.locator('#help-dialog')).toBeHidden();
+  });
 });
 
 test.describe('with animations', () => {

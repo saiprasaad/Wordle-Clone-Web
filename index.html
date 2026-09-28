@@ -27,6 +27,8 @@
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="preload" href="fonts/libre-franklin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/rokkitt.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="styles.css" />
     <script src="js/theme.js"></script>
     <script type="module" src="js/main.js"></script>
@@ -36,7 +38,25 @@
     <link rel="modulepreload" href="js/puzzle.js" />
   </head>
   <body>
-    <header class="app-header">
+    <section class="splash" id="splash" aria-labelledby="splash-title">
+      <div class="splash-content">
+        <svg class="splash-logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" /><path d="M15 21l8.5 24L32 26.5 40.5 45 49 21" /></svg>
+        <h1 class="splash-title" id="splash-title">Wordle</h1>
+        <p class="splash-greeting" id="splash-greeting" hidden></p>
+        <p class="splash-message" id="splash-message">Get 6 chances to guess a 5-&#8288;letter word.</p>
+        <div class="splash-buttons">
+          <button type="button" class="pill-button pill-button-outline" id="splash-secondary" hidden></button>
+          <button type="button" class="pill-button" id="splash-primary">Play</button>
+        </div>
+        <button type="button" class="link-button splash-help" id="splash-help">How to play</button>
+        <p class="splash-footer">
+          <span class="splash-date" id="splash-date"></span>
+          <span id="splash-number"></span>
+        </p>
+      </div>
+    </section>
+
+    <header class="app-header" inert>
       <div class="header-inner">
         <div class="header-group">
           <button type="button" class="icon-button" id="help-button" aria-label="How to play" aria-haspopup="dialog" title="How to play">
@@ -55,7 +75,7 @@
       </div>
     </header>
 
-    <main class="game">
+    <main class="game" inert>
       <div class="mode-bar">
         <fieldset class="mode-switch" id="mode-switch">
           <legend class="visually-hidden">Game mode</legend>
@@ -88,7 +108,7 @@
         <button type="button" class="icon-button dialog-close" data-close aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
-        <h2 class="dialog-title" id="help-title" tabindex="-1" autofocus>How to play</h2>
+        <h2 class="dialog-title dialog-title-display" id="help-title" tabindex="-1" autofocus>How To Play</h2>
         <p class="help-lead">Guess the hidden word in 6 tries.</p>
         <ul class="help-list">
           <li>Each guess must be a valid 5-letter word.</li>
@@ -171,6 +191,28 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
         <h2 class="dialog-title" id="settings-title" tabindex="-1" autofocus>Settings</h2>
+        <section class="account" id="account" aria-labelledby="account-title" hidden>
+          <h3 class="account-title" id="account-title">Account</h3>
+          <div id="account-signed-out">
+            <p class="account-text">Sign in to keep your stats, streaks and games in progress on all your devices.</p>
+            <button type="button" class="google-button" id="sign-in-button">
+              <svg class="google-logo" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              Sign in with Google
+            </button>
+            <p class="account-note">Only your game progress is stored, linked to your Google account. You can delete it at any time.</p>
+          </div>
+          <div id="account-signed-in" hidden>
+            <div class="account-row">
+              <span class="account-avatar" id="account-avatar" aria-hidden="true"></span>
+              <p class="account-user"><span class="account-name" id="account-name"></span><span class="account-email" id="account-email"></span></p>
+            </div>
+            <p class="account-status" id="account-status" role="status"></p>
+            <div class="account-actions">
+              <button type="button" class="button button-secondary button-small" id="sign-out-button">Sign out</button>
+              <button type="button" class="link-button link-button-danger" id="delete-account-button">Delete account</button>
+            </div>
+          </div>
+        </section>
         <div class="settings-list">
           <label class="setting">
             <span class="setting-text">
@@ -197,25 +239,6 @@
             <span class="switch" aria-hidden="true"></span>
           </label>
         </div>
-        <section class="account" id="account" aria-labelledby="account-title" hidden>
-          <h3 class="account-title" id="account-title">Account</h3>
-          <div id="account-signed-out">
-            <p class="account-text">Sign in to keep your stats, streaks and games in progress on all your devices.</p>
-            <button type="button" class="google-button" id="sign-in-button">
-              <svg class="google-logo" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-              Sign in with Google
-            </button>
-            <p class="account-note">Only your game progress is stored, linked to your Google account. You can delete it at any time.</p>
-          </div>
-          <div id="account-signed-in" hidden>
-            <p class="account-user"><span class="account-name" id="account-name"></span><span class="account-email" id="account-email"></span></p>
-            <p class="account-status" id="account-status" role="status"></p>
-            <div class="account-actions">
-              <button type="button" class="button button-secondary button-small" id="sign-out-button">Sign out</button>
-              <button type="button" class="link-button link-button-danger" id="delete-account-button">Delete account</button>
-            </div>
-          </div>
-        </section>
         <p class="settings-footer">
           <a href="https://github.com/saiprasaad/Wordle-Clone-Web" target="_blank" rel="noopener noreferrer">Source code</a>
           <span aria-hidden="true">·</span>

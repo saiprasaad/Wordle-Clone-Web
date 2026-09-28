@@ -1,6 +1,6 @@
 // Google sign-in and the player's cloud record, via Firebase. The SDK comes
-// from Google's CDN the first time it's needed, so players who never sign in
-// never download it.
+// from Google's CDN only once a player signs in, opens Settings or reaches for
+// a sign-in button, so just playing never downloads it.
 
 import { FIREBASE_CONFIG } from './config.js';
 
