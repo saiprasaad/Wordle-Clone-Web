@@ -21,6 +21,14 @@ export function save(key, value) {
   }
 }
 
+export function remove(key) {
+  try {
+    localStorage.removeItem(PREFIX + key);
+  } catch {
+    // Ignore, as above.
+  }
+}
+
 /** Calls `callback(key)` when another tab changes one of our keys. */
 export function onExternalChange(callback) {
   window.addEventListener('storage', (event) => {

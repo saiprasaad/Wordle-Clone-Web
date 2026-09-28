@@ -1,7 +1,6 @@
 // Connects the game rules to the page: modes, input, persistence and dialogs.
 
 import {
-  MAX_GUESSES,
   WORD_LENGTH,
   evaluateGuess,
   gameStatus,
@@ -9,11 +8,21 @@ import {
   isValidWord,
   letterStates,
 } from './game.js';
+import { PROFILE_SCHEMA, mergeProfiles, readGame, readSettings, sameProfile } from './profile.js';
 import { dailyAnswer, msUntilNextPuzzle, puzzleNumber, randomAnswer } from './puzzle.js';
-import { currentStreak, normalizeStats, recordGame, winPercentage } from './stats.js';
+import {
+  readDailyRecord,
+  readUnlimitedRecord,
+  recordDaily,
+  recordUnlimited,
+  summarizeDaily,
+  summarizeUnlimited,
+  winPercentage,
+} from './stats.js';
 import { shareText } from './share.js';
 import { definitionUrl, fetchDefinition } from './definition.js';
 import * as storage from './storage.js';
+import { createSync } from './cloud/sync.js';
 import { announce, describeGuess } from './ui/a11y.js';
 import { createBoard } from './ui/board.js';
 import { isAnyDialogOpen, setupDialog } from './ui/dialogs.js';
@@ -30,25 +39,32 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ---------- State ----------
 
+// Identifies this browser in synced stats (see stats.js).
+const device = loadDeviceId();
 const settings = loadSettings();
-const stats = {
-  daily: normalizeStats(storage.load('stats:daily', null)),
-  unlimited: normalizeStats(storage.load('stats:unlimited', null)),
-};
 const games = { daily: loadDailyGame(puzzleNumber()), unlimited: loadUnlimitedGame() };
+const records = loadRecords();
 // Letters typed into the current row, kept per mode so switching doesn't lose them.
 const inputs = { daily: '', unlimited: '' };
 let mode = 'daily';
 // True while a guess is being revealed; input is ignored until it finishes.
 let busy = false;
 
+function loadDeviceId() {
+  const saved = storage.load('device', null);
+  if (typeof saved === 'string' && /^[\w-]{1,64}$/.test(saved)) return saved;
+  const id = crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  storage.save('device', id);
+  return id;
+}
+
 function loadSettings() {
   const saved = storage.load('settings', null) ?? {};
   return {
-    hardMode: saved.hardMode === true,
+    ...readSettings(saved),
+    // Not synced: each device follows its own system theme unless changed.
     // null follows the operating system setting.
     darkTheme: typeof saved.darkTheme === 'boolean' ? saved.darkTheme : null,
-    highContrast: saved.highContrast === true,
   };
 }
 
@@ -56,38 +72,25 @@ function saveSettings() {
   storage.save('settings', settings);
 }
 
-/** Saved games come from localStorage, so check them before trusting them. */
-function isUsableGame(saved) {
-  if (!saved || typeof saved.answer !== 'string' || !isValidWord(saved.answer)) return false;
-  const { guesses } = saved;
-  if (!Array.isArray(guesses) || guesses.length > MAX_GUESSES) return false;
-  if (!guesses.every((guess) => typeof guess === 'string' && isValidWord(guess))) return false;
-  const winningGuess = guesses.indexOf(saved.answer);
-  return winningGuess === -1 || winningGuess === guesses.length - 1;
+/** Changes a setting that follows the player to their other devices. */
+function changeSyncedSetting(name, value) {
+  settings[name] = value;
+  settings.at = Date.now();
+  saveSettings();
+  sync.changed();
 }
 
 function newGame(answer, puzzle = null) {
-  return { puzzle, answer, guesses: [], hardMode: false, gaveUp: false };
-}
-
-function restoreGame(saved, puzzle) {
-  return {
-    ...newGame(saved.answer, puzzle),
-    guesses: [...saved.guesses],
-    hardMode: saved.hardMode === true,
-    gaveUp: saved.gaveUp === true,
-  };
+  return { puzzle, answer, guesses: [], hardMode: false, gaveUp: false, at: 0 };
 }
 
 function loadDailyGame(number) {
-  const saved = storage.load('game:daily', null);
-  if (isUsableGame(saved) && saved.puzzle === number) return restoreGame(saved, number);
-  return newGame(dailyAnswer(number), number);
+  const saved = readGame(storage.load('game:daily', null), { daily: true });
+  return saved?.puzzle === number ? saved : newGame(dailyAnswer(number), number);
 }
 
 function loadUnlimitedGame() {
-  const saved = storage.load('game:unlimited', null);
-  return isUsableGame(saved) ? restoreGame(saved, null) : dealUnlimitedGame();
+  return readGame(storage.load('game:unlimited', null), { daily: false }) ?? dealUnlimitedGame();
 }
 
 /** Picks a fresh unlimited word and saves it, so a reload keeps the same word. */
@@ -97,28 +100,50 @@ function dealUnlimitedGame() {
   // Skip recently played words, and never spoil today's daily word.
   const answer = randomAnswer([...recent, dailyAnswer(puzzleNumber())]);
   storage.save('recent', [...recent, answer].slice(-RECENT_WORDS_KEPT));
-  const game = newGame(answer);
+  const game = { ...newGame(answer), at: Date.now() };
   storage.save('game:unlimited', game);
   return game;
 }
 
+function loadRecords() {
+  const savedDaily = storage.load('stats:daily', null);
+  const savedUnlimited = storage.load('stats:unlimited', null);
+  // Totals saved by the previous version are converted once. The last
+  // finished puzzle becomes a real result when its game is still saved.
+  const lastGame = readGame(storage.load('game:daily', null), { daily: true });
+  const lastResult =
+    lastGame && statusOf(lastGame) !== 'playing'
+      ? { puzzle: lastGame.puzzle, ...resultOf(lastGame), at: lastGame.at }
+      : null;
+  const loaded = {
+    daily: readDailyRecord(savedDaily, { device, lastResult }),
+    unlimited: readUnlimitedRecord(savedUnlimited, { device }),
+  };
+  if (typeof savedDaily?.played === 'number') storage.save('stats:daily', loaded.daily);
+  if (typeof savedUnlimited?.played === 'number') storage.save('stats:unlimited', loaded.unlimited);
+  return loaded;
+}
+
 function saveGame(which) {
-  const { puzzle, answer, guesses, hardMode, gaveUp } = games[which];
-  storage.save(`game:${which}`, { puzzle, answer, guesses, hardMode, gaveUp });
+  games[which].at = Date.now();
+  storage.save(`game:${which}`, games[which]);
+  sync.changed();
 }
 
 function statusOf(game) {
   return game.gaveUp ? 'lost' : gameStatus(game.guesses, game.answer);
 }
 
+function resultOf(game) {
+  return { won: statusOf(game) === 'won', guesses: game.guesses.length, hardMode: game.hardMode };
+}
+
 function recordResult(which) {
   const game = games[which];
-  stats[which] = recordGame(stats[which], {
-    won: statusOf(game) === 'won',
-    guessCount: game.guesses.length,
-    puzzle: game.puzzle,
-  });
-  storage.save(`stats:${which}`, stats[which]);
+  const result = { ...resultOf(game), at: Date.now() };
+  if (which === 'daily') records.daily = recordDaily(records.daily, game.puzzle, result);
+  else records.unlimited = recordUnlimited(records.unlimited, device, result);
+  storage.save(`stats:${which}`, records[which]);
 }
 
 // ---------- Page elements ----------
@@ -137,6 +162,12 @@ const statsDialog = setupDialog($('stats-dialog'), {
     stopCountdown();
     refreshDailyPuzzle();
   },
+});
+const sync = createSync({
+  device,
+  getProfile: currentProfile,
+  applyProfile,
+  onChange: renderAccount,
 });
 
 function render() {
@@ -163,6 +194,11 @@ function setBusy(value) {
   busy = value;
   modeSwitch.disabled = value;
   newWordButton.disabled = value;
+  if (!busy && pendingProfile) {
+    const profile = pendingProfile;
+    pendingProfile = null;
+    applyProfile(profile);
+  }
 }
 
 // ---------- Playing ----------
@@ -252,6 +288,7 @@ function switchMode(next) {
 function startUnlimitedGame() {
   games.unlimited = dealUnlimitedGame();
   inputs.unlimited = '';
+  sync.changed();
   statsDialog.close();
   clearToasts();
   if (mode !== 'unlimited') {
@@ -330,16 +367,17 @@ function openStats() {
 
 function renderStats() {
   const game = games[mode];
-  const record = stats[mode];
+  const summary =
+    mode === 'daily' ? summarizeDaily(records.daily, puzzleNumber()) : summarizeUnlimited(records.unlimited);
   const status = statusOf(game);
   const over = status !== 'playing';
 
   $('stats-mode').textContent = mode === 'daily' ? 'Daily' : 'Unlimited';
-  $('stat-played').textContent = record.played;
-  $('stat-win').textContent = winPercentage(record);
-  $('stat-streak').textContent = currentStreak(record, mode === 'daily' ? puzzleNumber() : null);
-  $('stat-max').textContent = record.maxStreak;
-  renderDistribution(record, status === 'won' ? game.guesses.length : null);
+  $('stat-played').textContent = summary.played;
+  $('stat-win').textContent = winPercentage(summary);
+  $('stat-streak').textContent = summary.currentStreak;
+  $('stat-max').textContent = summary.maxStreak;
+  renderDistribution(summary, status === 'won' ? game.guesses.length : null);
 
   $('result').hidden = !over;
   if (over) renderResult(game, status);
@@ -351,9 +389,9 @@ function renderStats() {
   playButton.hidden = mode === 'unlimited' && !over;
 }
 
-function renderDistribution(record, highlight) {
-  const most = Math.max(...record.distribution);
-  const items = record.distribution.map((count, i) => {
+function renderDistribution(summary, highlight) {
+  const most = Math.max(...summary.distribution);
+  const items = summary.distribution.map((count, i) => {
     const guesses = i + 1;
     const item = document.createElement('li');
     const label = document.createElement('span');
@@ -371,8 +409,8 @@ function renderDistribution(record, highlight) {
     return item;
   });
   $('distribution').replaceChildren(...items);
-  $('distribution').hidden = record.played === 0;
-  $('distribution-empty').hidden = record.played > 0;
+  $('distribution').hidden = summary.played === 0;
+  $('distribution-empty').hidden = summary.played > 0;
 }
 
 function renderResult(game, status) {
@@ -526,13 +564,137 @@ function onHardModeChange() {
     showToast('Hard mode can only be turned on at the start of a round', { duration: 2400 });
     return;
   }
-  settings.hardMode = hardModeInput.checked;
-  saveSettings();
+  changeSyncedSetting('hardMode', hardModeInput.checked);
   // Turning hard mode off mid-round relaxes the current round too.
   if (!settings.hardMode && midRound && game.hardMode) {
     game.hardMode = false;
     saveGame(mode);
   }
+}
+
+// ---------- Accounts and sync ----------
+
+const SYNC_STATUS = {
+  connecting: 'Connecting…',
+  syncing: 'Syncing…',
+  synced: 'Your stats and progress are synced.',
+  offline: "You're offline. Changes will sync when you reconnect.",
+  error: "Couldn't sync just now. We'll keep trying.",
+};
+const CANCELLED_SIGN_IN = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request']);
+
+// A profile that arrives mid-animation waits until the reveal finishes.
+let pendingProfile = null;
+
+function currentProfile() {
+  return {
+    schema: PROFILE_SCHEMA,
+    settings: { hardMode: settings.hardMode, highContrast: settings.highContrast, at: settings.at },
+    daily: records.daily,
+    unlimited: records.unlimited,
+    games: { daily: games.daily, unlimited: games.unlimited },
+  };
+}
+
+/** Adopts a profile merged with other devices, keeping anything done here meanwhile. */
+function applyProfile(incoming) {
+  if (busy) {
+    pendingProfile = incoming;
+    return;
+  }
+  const merged = mergeProfiles(currentProfile(), incoming);
+  let changed = false;
+  if (!sameProfile(merged.settings, currentProfile().settings)) {
+    Object.assign(settings, merged.settings);
+    saveSettings();
+    applyTheme();
+    syncSettingsInputs();
+  }
+  for (const which of ['daily', 'unlimited']) {
+    if (!sameProfile(merged[which], records[which])) {
+      records[which] = merged[which];
+      storage.save(`stats:${which}`, records[which]);
+      changed = true;
+    }
+    const game = merged.games[which];
+    // Another device may already be on tomorrow's puzzle; that waits until
+    // it's tomorrow here too.
+    const usable =
+      game && (which === 'unlimited' || (game.puzzle >= games.daily.puzzle && game.puzzle <= puzzleNumber()));
+    if (usable && !sameProfile(game, games[which])) {
+      games[which] = { ...game, guesses: [...game.guesses] };
+      inputs[which] = '';
+      storage.save(`game:${which}`, games[which]);
+      changed = true;
+    }
+  }
+  if (changed) {
+    render();
+    if (statsDialog.isOpen) renderStats();
+  }
+  // Anything changed here while the sync was running still needs uploading.
+  if (!sameProfile(merged, incoming)) sync.changed();
+}
+
+function renderAccount({ available, status, user }) {
+  $('account').hidden = !available;
+  $('sync-prompt').hidden = !available || Boolean(user);
+  if (!available) return;
+  $('account-signed-out').hidden = Boolean(user);
+  $('account-signed-in').hidden = !user;
+  $('sign-in-button').disabled = status === 'connecting';
+  if (!user) return;
+  $('account-name').textContent = user.name || user.email;
+  $('account-email').textContent = user.name ? user.email : '';
+  $('account-status').textContent = SYNC_STATUS[status] ?? '';
+}
+
+async function signIn() {
+  try {
+    await sync.signIn();
+    showToast('Signed in. Your progress now syncs across devices.', { duration: 2600 });
+  } catch (error) {
+    if (CANCELLED_SIGN_IN.has(error?.code)) return;
+    showToast(
+      error?.code === 'auth/popup-blocked'
+        ? 'The sign-in window was blocked. Tap Sign in again.'
+        : "Couldn't sign in. Please try again.",
+      { duration: 3000 },
+    );
+  }
+}
+
+async function signOut() {
+  await sync.signOut();
+  showToast('Signed out. Your progress stays on this device.', { duration: 2600 });
+}
+
+// Deleting the account needs a second tap to confirm.
+let deleteTimer = null;
+
+async function onDeleteAccountClick() {
+  const button = $('delete-account-button');
+  if (!button.hasAttribute('data-armed')) {
+    button.dataset.armed = '';
+    button.textContent = 'Tap again to delete your account and cloud data';
+    deleteTimer = setTimeout(disarmDelete, 4000);
+    return;
+  }
+  disarmDelete();
+  try {
+    await sync.deleteAccount();
+    showToast('Your account and cloud data were deleted.', { duration: 3000 });
+  } catch (error) {
+    if (CANCELLED_SIGN_IN.has(error?.code)) return;
+    showToast("Couldn't delete your account. Please try again.", { duration: 3000 });
+  }
+}
+
+function disarmDelete() {
+  clearTimeout(deleteTimer);
+  const button = $('delete-account-button');
+  delete button.dataset.armed;
+  button.textContent = 'Delete account';
 }
 
 // ---------- Keyboard and lifecycle ----------
@@ -578,19 +740,23 @@ function onStorageChange(key) {
     Object.assign(settings, loadSettings());
     applyTheme();
     syncSettingsInputs();
-  } else if (key === 'stats:daily' || key === 'stats:unlimited') {
-    const which = key.slice('stats:'.length);
-    stats[which] = normalizeStats(storage.load(key, null));
+  } else if (key === 'stats:daily') {
+    records.daily = readDailyRecord(storage.load(key, null), { device });
+    if (statsDialog.isOpen) renderStats();
+  } else if (key === 'stats:unlimited') {
+    records.unlimited = readUnlimitedRecord(storage.load(key, null), { device });
     if (statsDialog.isOpen) renderStats();
   } else if (key === 'game:daily' || key === 'game:unlimited') {
     const which = key.slice('game:'.length);
-    const saved = storage.load(key, null);
-    if (!isUsableGame(saved)) return;
-    if (which === 'daily' && saved.puzzle !== games.daily.puzzle) return;
-    games[which] = restoreGame(saved, saved.puzzle ?? null);
+    const saved = readGame(storage.load(key, null), { daily: which === 'daily' });
+    if (!saved || (which === 'daily' && saved.puzzle !== games.daily.puzzle)) return;
+    games[which] = saved;
     inputs[which] = '';
     if (mode === which) render();
     if (statsDialog.isOpen) renderStats();
+  } else if (key === 'account' && storage.load('account', false)) {
+    // Signed in from another tab.
+    sync.start();
   }
 }
 
@@ -614,6 +780,7 @@ export function start() {
   $('settings-button').addEventListener('click', () => {
     syncSettingsInputs();
     settingsDialog.open();
+    if (!sync.state.user) sync.prepare();
   });
   $('share-button').addEventListener('click', shareResults);
   $('play-button').addEventListener('click', () => {
@@ -630,8 +797,7 @@ export function start() {
     applyTheme();
   });
   highContrastInput.addEventListener('change', () => {
-    settings.highContrast = highContrastInput.checked;
-    saveSettings();
+    changeSyncedSetting('highContrast', highContrastInput.checked);
     applyTheme();
   });
   systemDarkTheme.addEventListener('change', () => {
@@ -641,10 +807,25 @@ export function start() {
   });
   storage.onExternalChange(onStorageChange);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) refreshDailyPuzzle();
+    if (document.hidden) return;
+    refreshDailyPuzzle();
+    sync.refresh();
   });
   window.addEventListener('focus', refreshDailyPuzzle);
+  window.addEventListener('online', () => sync.refresh());
   scheduleMidnightRefresh();
+
+  $('sign-in-button').addEventListener('click', signIn);
+  const promptButton = $('sync-prompt-button');
+  promptButton.addEventListener('click', signIn);
+  // Start loading sign-in as soon as the button looks likely to be pressed.
+  for (const event of ['pointerenter', 'focus']) {
+    promptButton.addEventListener(event, () => sync.prepare(), { once: true });
+  }
+  $('sign-out-button').addEventListener('click', signOut);
+  $('delete-account-button').addEventListener('click', onDeleteAccountClick);
+  renderAccount(sync.state);
+  sync.start();
 
   if (!storage.load('seen-help', false)) {
     storage.save('seen-help', true);

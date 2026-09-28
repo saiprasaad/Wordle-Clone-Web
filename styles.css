@@ -19,6 +19,7 @@
   --color-switch-off: #878a8c;
   --color-button: #3f7d3b;
   --color-danger: #c9372c;
+  --color-danger-text: #b3261e;
   --color-focus: #1d6ae5;
   --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.18);
   --header-height: 52px;
@@ -44,6 +45,7 @@
   --color-toast-text: #121213;
   --color-switch-off: #565758;
   --color-focus: #7aa7ff;
+  --color-danger-text: #ff8a80;
   --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.6);
 }
 
@@ -761,6 +763,30 @@ svg {
   }
 }
 
+/* ---------- Links styled as buttons ---------- */
+
+.link-button {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-button-danger {
+  color: var(--color-danger-text);
+}
+
+.sync-prompt {
+  margin: 16px 0 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 /* ---------- Settings ---------- */
 
 .settings-list {
@@ -834,6 +860,104 @@ svg {
 .switch-input:focus-visible + .switch {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+.account {
+  padding: 18px 0 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.account-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+
+.account-text,
+.account-note,
+.account-status {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.account-text {
+  margin: 0 0 12px;
+}
+
+.account-note {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+}
+
+/* Follows Google's sign-in button guidelines. */
+.google-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 16px 0 12px;
+  border: 1px solid #747775;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:root[data-theme='dark'] .google-button {
+  border-color: #8e918f;
+  background: #131314;
+  color: #e3e3e3;
+}
+
+.google-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.google-logo {
+  width: 20px;
+  height: 20px;
+  stroke: none;
+}
+
+.account-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.account-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.account-email {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.account-status {
+  margin: 6px 0 14px;
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.button-small {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 0.9rem;
 }
 
 .settings-footer {
