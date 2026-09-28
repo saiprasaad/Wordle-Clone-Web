@@ -54,7 +54,7 @@
         <p class="splash-footer">
           <span class="splash-puzzle" id="splash-number"></span>
           <span id="splash-date"></span>
-          <span id="splash-next" hidden></span>
+          <span class="splash-next" id="splash-next" hidden></span>
         </p>
       </div>
     </section>
@@ -138,7 +138,7 @@
         </div>
         <h3 class="help-subtitle">Two ways to play</h3>
         <ul class="help-list">
-          <li><strong>Daily</strong> gives everyone the same word. A new puzzle arrives at midnight.</li>
+          <li><strong>Daily</strong> gives everyone the same word. A new puzzle arrives at midnight US Eastern Time.</li>
           <li><strong>Unlimited</strong> serves a fresh random word whenever you like.</li>
         </ul>
         <p class="help-note">Type on your keyboard or tap the keys. For an extra challenge, turn on Hard Mode in Settings.</p>
@@ -171,6 +171,7 @@
           <p class="countdown" id="countdown">
             <span class="countdown-label">Next puzzle</span>
             <span class="countdown-time" id="countdown-time" role="timer" aria-live="off"></span>
+            <span class="countdown-when" id="countdown-when"></span>
           </p>
           <div class="stats-buttons">
             <button type="button" class="button button-primary" id="share-button">

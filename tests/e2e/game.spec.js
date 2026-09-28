@@ -47,6 +47,7 @@ test('wins the daily puzzle with the physical keyboard', async ({ page }) => {
   await expect(stats.locator('.distribution-bar[data-highlight]')).toHaveCount(1);
   await expect(stats.locator('.distribution li').nth(1).locator('[data-highlight]')).toHaveCount(1);
   await expect(stats.locator('#countdown-time')).toHaveText('12:00:00');
+  await expect(stats.locator('#countdown-when')).toHaveText('at midnight US Eastern Time');
 });
 
 test('shares a spoiler-free grid to the clipboard', async ({ page, context }) => {
@@ -362,10 +363,10 @@ test.describe('welcome screen', () => {
     for (const word of wrongWords(TODAY_ANSWER, 6)) await guess(page, word);
     await expect(page.locator('#stats-dialog')).toBeVisible();
     await page.reload();
-    await expect(page.locator('#splash-message')).toHaveText('Not this time. A new word arrives at midnight.');
+    await expect(page.locator('#splash-message')).toHaveText('Not this time. Better luck with the next word!');
     await expect(page.locator('#splash-primary')).toHaveText('See stats');
-    // Noon in the test time zone: twelve hours until the next puzzle.
-    await expect(page.locator('#splash-next')).toHaveText('Next puzzle in 12h');
+    // Noon in New York: twelve hours until the next puzzle.
+    await expect(page.locator('#splash-next')).toHaveText('Next puzzle in 12h, at midnight US Eastern Time');
 
     await page.locator('#splash-secondary', { hasText: 'Play Unlimited' }).click();
     await expect(page.locator('#splash')).toBeHidden();
@@ -382,6 +383,27 @@ test.describe('welcome screen', () => {
     // Having read the rules, the player isn't shown them again.
     await startPlaying(page);
     await expect(page.locator('#help-dialog')).toBeHidden();
+  });
+});
+
+test.describe('outside the US', () => {
+  test.use({ timezoneId: 'Asia/Kolkata' });
+
+  test('plays the same puzzle as New York and gives the switch-over in local time', async ({ page }) => {
+    // 8:30am on 6 October in India is 11pm on 5 October in New York.
+    await openGame(page, { time: new Date('2026-10-06T08:30:00+05:30'), play: false });
+    await expect(page.locator('#splash-number')).toHaveText(`Daily puzzle #${TODAY_PUZZLE}`);
+    await expect(page.locator('#splash-date')).toHaveText('Monday, October 5');
+
+    await startPlaying(page);
+    for (const word of wrongWords(TODAY_ANSWER, 6)) await guess(page, word);
+    await expect(page.locator('#countdown-time')).toHaveText('01:00:00');
+    await expect(page.locator('#countdown-when')).toHaveText('at midnight US Eastern Time (9:30 AM your time)');
+
+    await page.reload();
+    await expect(page.locator('#splash-next')).toHaveText(
+      'Next puzzle in 1h, at midnight US Eastern Time (9:30 AM your time)',
+    );
   });
 });
 

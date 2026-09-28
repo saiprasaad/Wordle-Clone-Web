@@ -340,6 +340,13 @@ svg {
   font-weight: 700;
 }
 
+.splash-next {
+  align-self: center;
+  max-width: 18em;
+  margin-top: 4px;
+  text-wrap: balance;
+}
+
 .pill-button {
   display: inline-flex;
   align-items: center;
@@ -928,6 +935,12 @@ svg {
 .countdown-time {
   font-size: 1.75rem;
   font-variant-numeric: tabular-nums;
+}
+
+.countdown-when {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-align: center;
 }
 
 .stats-buttons {
