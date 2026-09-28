@@ -78,8 +78,9 @@ subfolder. Every merge to `main` goes live automatically on:
 
 ## Accounts and sync
 
-Signing in is optional, and accounts stay hidden until `js/cloud/config.js` holds a Firebase
-project's settings. Everything here fits in Firebase's free Spark plan, with no billing account.
+Signing in is optional. Accounts use the Firebase project whose settings are in
+`js/cloud/config.js`; setting it to `null` turns accounts off. Everything here fits in Firebase's
+free Spark plan, with no billing account.
 
 The game always saves to the browser first. While a player is signed in, it merges that copy with
 their record in Cloud Firestore (`players/{uid}`) in the background, so it never waits on the
@@ -93,6 +94,8 @@ player read and write only their own record.
    Analytics isn't needed. New projects start on the free Spark plan, so leave the plan as is.
 2. Under **Project settings → Your apps**, add a web app and copy its `firebaseConfig` values into
    `js/cloud/config.js`. These values are public by design; the security rules protect the data.
+   If the project's auth domain changes, update `frame-src` in the page's Content Security Policy
+   in `index.html` to match.
 3. Under **Authentication → Sign-in method**, enable **Google**.
 4. Under **Authentication → Settings → Authorized domains**, add each domain the game is served
    from, such as `saiprasaad.github.io` and the Netlify domain. `localhost` is there already.
@@ -110,7 +113,8 @@ npm start            # then open http://localhost:8080/?emulators
 ```
 
 With `?emulators`, **Sign in with Google** signs in a test player instead of opening Google's
-sign-in window.
+sign-in window. Local copies never use the real Firebase project: without `?emulators`, accounts
+stay off on `localhost`.
 
 ## Project layout
 
